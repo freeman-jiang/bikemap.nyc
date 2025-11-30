@@ -1,61 +1,26 @@
 import { type Station, type Trip, prisma } from '@bikemap/db';
-import { parse } from 'csv-parse';
 import { glob } from 'glob';
 import path from 'path';
-import { z } from 'zod';
+import type { WorkerInput, WorkerOutput } from './worker';
 
-const BATCH_SIZE = 5000;
+const WORKER_COUNT = 10;
+// const BATCH_SIZE = 10000;
 
-const CSVRowSchema = z.object({
-  ride_id: z.string().min(1),
-  rideable_type: z.string().min(1),
-  started_at: z.coerce.date(),
-  ended_at: z.coerce.date(),
-  start_station_name: z.string().min(1),
-  start_station_id: z.string().min(1),
-  end_station_name: z.string().min(1),
-  end_station_id: z.string().min(1),
-  start_lat: z.coerce.number(),
-  start_lng: z.coerce.number(),
-  end_lat: z.coerce.number(),
-  end_lng: z.coerce.number(),
-  member_casual: z.enum(["member", "casual"]), 
-});
-
-type CSVRow = z.infer<typeof CSVRowSchema>;
-
-function validateRow(data: { row: unknown; rowIndex: number; fileName: string }): CSVRow {
-  const result = CSVRowSchema.safeParse(data.row);
-  if (!result.success) {
-    const errors = result.error.issues.map((e) => e.message).join(', ');
-    throw new Error(`Validation failed in ${data.fileName} at row ${data.rowIndex + 2}: ${errors}\nRow data: ${JSON.stringify(data.row)}`);
-  }
-  return result.data;
-}
-
-async function updateStationMapWithRows(stationMap: Map<string, Station>, rows: CSVRow[]): Promise<Map<string, Station>> {
-  for (const row of rows) {
-    if (!stationMap.has(row.start_station_id)) {
-      stationMap.set(row.start_station_id, {
-        id: row.start_station_id,
-        name: row.start_station_name,
-        latitude: row.start_lat,
-        longitude: row.start_lng,
-      });
-    }
-
-    if (!stationMap.has(row.end_station_id)) {
-      stationMap.set(row.end_station_id, {
-        id: row.end_station_id,
-        name: row.end_station_name,
-        latitude: row.end_lat,
-        longitude: row.end_lng,
-      });
-    }
-  }
-
-  return stationMap;
-}
+type CSVRow = {
+  ride_id: string;
+  rideable_type: string;
+  started_at: Date;
+  ended_at: Date;
+  start_station_name: string;
+  start_station_id: string;
+  end_station_name: string;
+  end_station_id: string;
+  start_lat: number;
+  start_lng: number;
+  end_lat: number;
+  end_lng: number;
+  member_casual: 'member' | 'casual';
+};
 
 function mapRowToTrip(row: CSVRow): Trip {
   return {
@@ -73,65 +38,134 @@ function mapRowToTrip(row: CSVRow): Trip {
   };
 }
 
-
-
-async function insertTripsInBatches(trips: Trip[]) {
-  for (let i = 0; i < trips.length; i += BATCH_SIZE) {
-    const batch = trips.slice(i, i + BATCH_SIZE);
-    await prisma.trip.createMany({ data: batch });
+function updateStationMap(stationMap: Map<string, Station>, rows: CSVRow[]): void {
+  for (const row of rows) {
+    if (!stationMap.has(row.start_station_id)) {
+      stationMap.set(row.start_station_id, {
+        id: row.start_station_id,
+        name: row.start_station_name,
+        latitude: row.start_lat,
+        longitude: row.start_lng,
+      });
+    }
+    if (!stationMap.has(row.end_station_id)) {
+      stationMap.set(row.end_station_id, {
+        id: row.end_station_id,
+        name: row.end_station_name,
+        latitude: row.end_lat,
+        longitude: row.end_lng,
+      });
+    }
   }
 }
 
-async function main() {
-  const dataDir = path.join(process.cwd(), '../../data');
-  let csvFiles = glob.sync('**/*.csv', { cwd: dataDir, absolute: true });
+async function insertTripsInBatches(trips: Trip[]): Promise<void> {
+  await prisma.trip.createMany({data: trips})
+  // for (let i = 0; i < trips.length; i += BATCH_SIZE) {
+  //   const batch = trips.slice(i, i + BATCH_SIZE);
+  //   await prisma.trip.createMany({ data: batch });
+  // }
+}
 
-  console.log(`Found ${csvFiles.length} CSV files\n`);
+type ProcessResult = {
+  totalTrips: number;
+  totalSkipped: number;
+  stationMap: Map<string, Station>;
+};
 
+async function processFilesWithWorkers(filePaths: string[]): Promise<ProcessResult> {
   const stationMap = new Map<string, Station>();
+  const fileQueue = [...filePaths];
+  let activeWorkers = 0;
+  let processedFiles = 0;
   let totalTrips = 0;
-  let skippedRows = 0;
+  let totalSkipped = 0;
 
-  for (const csvFile of csvFiles) {
-    const fileName = path.basename(csvFile);
-    console.log(`Processing ${fileName}...`);
+  // Queue for sequential DB writes
+  let writePromise = Promise.resolve();
 
-    const file = Bun.file(csvFile);
-    const fileString = await file.text();
-    const parser = parse(fileString, { columns: true });
+  return new Promise((resolve) => {
+    const workers: Worker[] = [];
 
-    const validRows: CSVRow[] = [];
-
-    let rowIndex = 0;
-    for await (const record of parser) {
-      try {
-        const row = validateRow({ row: record, rowIndex, fileName });
-        validRows.push(row);
-      } catch (err) {
-        skippedRows++;
+    function assignWork(worker: Worker): void {
+      const nextFile = fileQueue.shift();
+      if (nextFile) {
+        activeWorkers++;
+        worker.postMessage({ type: 'process', filePath: nextFile } satisfies WorkerInput);
+      } else if (activeWorkers === 0) {
+        // All workers done, wait for final writes then resolve
+        writePromise.then(() => {
+          workers.forEach((w) => w.terminate());
+          resolve({ totalTrips, totalSkipped, stationMap });
+        });
       }
-      rowIndex++;
     }
 
-    // Update station map
-    await updateStationMapWithRows(stationMap, validRows);
+    for (let i = 0; i < WORKER_COUNT; i++) {
+      const worker = new Worker(new URL('./worker.ts', import.meta.url).href);
 
-    // Insert trips for this file
-    const trips = validRows.map(mapRowToTrip);
-    await insertTripsInBatches(trips);
-    totalTrips += trips.length;
+      worker.onmessage = (event: MessageEvent<WorkerOutput>) => {
+        const data = event.data;
 
-    const percentThrown = rowIndex > 0 ? ((skippedRows / rowIndex) * 100).toFixed(2) : 0;
-    console.log(`  ${validRows.length} valid rows, ${skippedRows} skipped (${percentThrown}% thrown away)`);
-  }
+        if (data.type === 'ready') {
+          assignWork(worker);
+        } else if (data.type === 'result') {
+          activeWorkers--;
+          processedFiles++;
 
-  // Insert all stations at the end
+          const percentSkipped =
+            data.totalCount > 0 ? ((data.skippedCount / data.totalCount) * 100).toFixed(2) : '0';
+          console.log(
+            `[${processedFiles}/${filePaths.length}] ${data.fileName}: ${data.validRows.length} valid, ${data.skippedCount} skipped (${percentSkipped}%)`
+          );
+
+          // Update stations (in memory, fast)
+          updateStationMap(stationMap, data.validRows);
+          totalSkipped += data.skippedCount;
+
+          // Queue DB write for this file's trips
+          const trips: Trip[] = [];
+          for (const row of data.validRows) {
+            trips.push(mapRowToTrip(row));
+          }
+          totalTrips += trips.length;
+
+          writePromise = writePromise.then(() => insertTripsInBatches(trips));
+
+          // Assign next work immediately (don't wait for DB write)
+          assignWork(worker);
+        }
+      };
+
+      worker.onerror = (error) => {
+        console.error('Worker error:', error);
+        activeWorkers--;
+        assignWork(worker);
+      };
+
+      workers.push(worker);
+    }
+  });
+}
+
+async function main(): Promise<void> {
+  const dataDir = path.join(process.cwd(), '../../data');
+  const csvFiles = glob.sync('**/*.csv', { cwd: dataDir, absolute: true });
+
+  console.log(`Found ${csvFiles.length} CSV files\n`);
+  console.log(`Processing with ${WORKER_COUNT} workers...\n`);
+
+  const startTime = Date.now();
+  const { totalTrips, totalSkipped, stationMap } = await processFilesWithWorkers(csvFiles);
+
+  // Insert stations at the end
   console.log(`\nInserting ${stationMap.size} stations...`);
   await prisma.station.createMany({
     data: Array.from(stationMap.values()),
   });
 
-  console.log(`\nDone! Inserted ${totalTrips} trips and ${stationMap.size} stations.`);
+  const totalTime = (Date.now() - startTime) / 1000;
+  console.log(`\nDone! ${totalTrips} trips, ${totalSkipped} skipped in ${totalTime.toFixed(1)}s`);
 }
 
-main()
+main();
