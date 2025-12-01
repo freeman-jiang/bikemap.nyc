@@ -35,3 +35,13 @@ model Station {
   latitude  Float
   longitude Float
 }
+
+model Route {
+  startStationId String
+  endStationId   String
+  geometry       String // polyline6 encoded
+  distance       Float
+  duration       Float
+
+  @@id([startStationId, endStationId])
+}

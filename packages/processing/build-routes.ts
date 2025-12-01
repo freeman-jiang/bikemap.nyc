@@ -3,8 +3,7 @@ import path from 'path';
 import { z } from 'zod';
 
 const OSRM_URL = 'http://localhost:5000';
-const CONCURRENCY = 100;
-const BATCH_SIZE = 100_000;
+const CONCURRENCY = 50;
 
 // Station pair from DB query
 const StationPairSchema = z.object({
@@ -84,6 +83,7 @@ async function fetchRoute(data: {
     }
 
     if (!isSuccessResponse(parsed.data)) {
+      console.error(`OSRM error: ${parsed.data.code} - ${parsed.data.message ?? 'no message'}`);
       return null;
     }
 
@@ -93,7 +93,6 @@ async function fetchRoute(data: {
       distance: route.distance,
       duration: route.duration,
     };
-
   } catch (error) {
     console.error('Route fetch error:', error);
     return null;
@@ -102,22 +101,22 @@ async function fetchRoute(data: {
 
 async function main(): Promise<void> {
   const dbPath = path.join(import.meta.dir, '../db/mydb.db');
-  const db = new Database(dbPath, { readonly: true });
+  const db = new Database(dbPath);
 
-  const outputPath = path.join(import.meta.dir, '../db/routes.json');
+  // Prepare insert statement
+  const insertRoute = db.prepare(`
+    INSERT OR REPLACE INTO Route (startStationId, endStationId, geometry, distance, duration)
+    VALUES (?, ?, ?, ?, ?)
+  `);
 
-  // Check for existing progress
-  let routeCache: Record<string, RouteData> = {};
-  let processedPairs = new Set<string>();
-
-  try {
-    const existing = await Bun.file(outputPath).json();
-    routeCache = existing;
-    processedPairs = new Set(Object.keys(existing));
-    console.log(`Resuming: ${processedPairs.size} routes already cached`);
-  } catch {
-    console.log('Starting fresh route cache');
-  }
+  // Get existing routes to skip
+  const existingRoutes = new Set(
+    db
+      .query<{ key: string }, []>(`SELECT startStationId || '->' || endStationId as key FROM Route`)
+      .all()
+      .map((r) => r.key)
+  );
+  console.log(`Found ${existingRoutes.size} existing routes in DB`);
 
   // Get unique station pairs with coordinates, ordered by trip count (most popular first)
   console.log('Fetching unique station pairs...');
@@ -145,8 +144,8 @@ async function main(): Promise<void> {
 
   // Filter out already processed pairs
   const remainingPairs = pairs.filter((p) => {
-    const key = `${p.startStationId}|${p.endStationId}`;
-    return !processedPairs.has(key);
+    const key = `${p.startStationId}->${p.endStationId}`;
+    return !existingRoutes.has(key);
   });
 
   console.log(`${remainingPairs.length} pairs remaining to process`);
@@ -176,15 +175,23 @@ async function main(): Promise<void> {
       })
     );
 
-    for (const { pair, routeData } of results) {
-      const key = `${pair.startStationId}|${pair.endStationId}`;
-      if (routeData) {
-        routeCache[key] = routeData;
-        processed++;
-      } else {
-        failed++;
+    // Insert batch into DB
+    db.transaction(() => {
+      for (const { pair, routeData } of results) {
+        if (routeData) {
+          insertRoute.run(
+            pair.startStationId,
+            pair.endStationId,
+            routeData.geometry,
+            routeData.distance,
+            routeData.duration
+          );
+          processed++;
+        } else {
+          failed++;
+        }
       }
-    }
+    })();
 
     // Progress update
     const total = processed + failed;
@@ -196,22 +203,13 @@ async function main(): Promise<void> {
     process.stdout.write(
       `\r[${total}/${remainingPairs.length}] ${processed} success, ${failed} failed | ${rate.toFixed(0)}/s | ETA: ${(eta / 60).toFixed(1)}min`
     );
-
-    // Save progress periodically
-    if (total % BATCH_SIZE === 0) {
-      await Bun.write(outputPath, JSON.stringify(routeCache));
-    }
   }
-
-  // Final save
-  await Bun.write(outputPath, JSON.stringify(routeCache));
 
   console.log('\n');
   console.log('='.repeat(50));
   console.log(`Routes cached: ${processed}`);
   console.log(`Routes failed: ${failed}`);
   console.log(`Total time: ${((Date.now() - startTime) / 1000 / 60).toFixed(1)} minutes`);
-  console.log(`Output: ${outputPath}`);
   console.log('='.repeat(50));
 
   db.close();
