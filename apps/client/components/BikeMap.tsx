@@ -4,6 +4,7 @@ import { getActiveRides } from "@/app/server/trips";
 import { getColorFromBikeType } from "@/utils/map";
 import polyline from "@mapbox/polyline";
 import along from "@turf/along";
+import bearing from "@turf/bearing";
 import { lineString } from "@turf/helpers";
 import length from "@turf/length";
 import type { GeoJSONSource } from "mapbox-gl";
@@ -26,6 +27,7 @@ type PreparedTrip = {
   endProgress: number; // 0-1, where on route the bike ends (for clipped trips)
   line: GeoJSON.Feature<GeoJSON.LineString>; // turf lineString for interpolation
   totalDistance: number; // in meters
+  currentBearing: number; // Current bearing for smooth rotation (mutable)
 };
 
 // Animation plays at 150x speed (e.g., 2 hours plays in ~48 seconds)
@@ -36,6 +38,22 @@ const FADE_DURATION_MS = 700;
 
 // Color transition duration after fade-in (in real time)
 const TRANSITION_DURATION_MS = 700;
+
+// Interpolate between two angles, handling 360°/0° wrapping
+function interpolateAngle(from: number, to: number, factor: number): number {
+  // Normalize angles to 0-360
+  from = ((from % 360) + 360) % 360;
+  to = ((to % 360) + 360) % 360;
+
+  // Calculate shortest distance
+  let diff = to - from;
+  if (diff > 180) diff -= 360;
+  if (diff < -180) diff += 360;
+
+  // Interpolate
+  let result = from + diff * factor;
+  return ((result % 360) + 360) % 360;
+}
 
 // Ease-in at start, linear middle, ease-out at end
 function easeInOutEdges(t: number, edgePercent: number = 0.1): number {
@@ -102,6 +120,12 @@ function prepareTrips(data: {
       const fadeDurationSim = (FADE_DURATION_MS / 1000) * SPEEDUP * 1000;
       const transitionDurationSim = (TRANSITION_DURATION_MS / 1000) * SPEEDUP * 1000;
 
+      // Calculate initial bearing from the start of the route
+      const startPoint = along(line, startProgress * totalDistance, { units: "meters" });
+      const lookAhead = Math.min(100, totalDistance - startProgress * totalDistance);
+      const nextPoint = along(line, startProgress * totalDistance + lookAhead, { units: "meters" });
+      const initialBearing = bearing(startPoint, nextPoint);
+
       return {
         id: trip.id,
         color: getColorFromBikeType(trip.rideableType),
@@ -111,6 +135,7 @@ function prepareTrips(data: {
         endProgress,
         line,
         totalDistance,
+        currentBearing: initialBearing,
       };
     })
     .filter((trip): trip is PreparedTrip => trip !== null);
@@ -219,6 +244,24 @@ function AnimationController(props: {
         const distanceAlongRoute = routeProgress * trip.totalDistance;
         const point = along(trip.line, distanceAlongRoute, { units: "meters" });
 
+        // Calculate bearing (direction) for icon rotation
+        let bikeBearing: number;
+
+        if (phase === "fading-out") {
+          // Lock bearing during fade-out (keep final travel direction)
+          bikeBearing = trip.currentBearing;
+        } else {
+          // Look 100 meters ahead for smoother direction changes
+          const lookAheadDistance = Math.min(100, trip.totalDistance - distanceAlongRoute);
+          const nextDistance = distanceAlongRoute + lookAheadDistance;
+          const nextPoint = along(trip.line, nextDistance, { units: "meters" });
+          const newBearing = bearing(point, nextPoint);
+
+          // Smooth bearing changes: 30% new bearing, 70% old bearing
+          bikeBearing = interpolateAngle(trip.currentBearing, newBearing, 0.3);
+          trip.currentBearing = bikeBearing; // Update for next frame
+        }
+
         features.push({
           type: "Feature",
           geometry: point.geometry,
@@ -227,6 +270,7 @@ function AnimationController(props: {
             color: trip.color,
             phase,
             phaseProgress,
+            bearing: bikeBearing,
           },
         });
       }
@@ -293,6 +337,35 @@ function AnimationController(props: {
   );
 }
 
+// Component to load custom icon into map
+function IconLoader() {
+  const { current: mapRef } = useMap();
+
+  useEffect(() => {
+    const map = mapRef?.getMap();
+    if (!map) return;
+
+    // Create a cursor-style pointer icon with rounded corners, rotated to point up
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <g transform="rotate(45 12 12)">
+          <path d="M4.037 4.688a.495.495 0 0 1 .651-.651l16 6.5a.5.5 0 0 1-.063.947l-6.124 1.58a2 2 0 0 0-1.438 1.435l-1.579 6.126a.5.5 0 0 1-.947.063z"/>
+        </g>
+      </svg>
+    `;
+
+    const img = new Image(24, 24);
+    img.onload = () => {
+      if (!map.hasImage('caret')) {
+        map.addImage('caret', img, { sdf: true }); // sdf: true allows recoloring
+      }
+    };
+    img.src = 'data:image/svg+xml;base64,' + btoa(svg);
+  }, [mapRef]);
+
+  return null;
+}
+
 export const BikeMap = () => {
   const [preparedTrips, setPreparedTrips] = useState<PreparedTrip[]>([]);
   const [windowDurationMs, setWindowDurationMs] = useState(0);
@@ -337,10 +410,17 @@ export const BikeMap = () => {
       <Source id="riders" type="geojson" data={EMPTY_GEOJSON}>
         <Layer
           id="riders"
-          type="circle"
+          type="symbol"
+          layout={{
+            "icon-image": "caret",
+            "icon-size": 0.5,
+            "icon-rotate": ["get", "bearing"],
+            "icon-rotation-alignment": "map",
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true,
+          }}
           paint={{
-            "circle-radius": 5,
-            "circle-opacity": [
+            "icon-opacity": [
               "case",
               ["==", ["get", "phase"], "fading-in"],
               ["*", ["get", "phaseProgress"], 0.8], // 0 → 0.8
@@ -348,7 +428,7 @@ export const BikeMap = () => {
               ["*", ["-", 1, ["get", "phaseProgress"]], 0.8], // 0.8 → 0
               0.8, // moving = max opacity
             ],
-            "circle-color": [
+            "icon-color": [
               "case",
               ["==", ["get", "phase"], "fading-in"],
               "#22c55e", // green
@@ -359,17 +439,19 @@ export const BikeMap = () => {
                 ["linear"],
                 ["get", "phaseProgress"],
                 0, "#22c55e", // green at start
-                1, ["get", "color"], // gray at end
+                1, ["get", "color"], // gray/blue at end
               ],
 
               ["==", ["get", "phase"], "fading-out"],
               "#ef4444", // red (instant)
 
-              ["get", "color"], // moving = gray
+              ["get", "color"], // moving = gray/blue based on bike type
             ],
           }}
         />
       </Source>
+
+      <IconLoader />
 
       {preparedTrips.length > 0 && windowDurationMs > 0 && (
         <AnimationController
