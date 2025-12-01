@@ -4,21 +4,10 @@ import { getActiveRides } from "@/app/server/trips";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useState } from "react";
 import Map, { Layer, Source } from "react-map-gl/mapbox";
-import type { CircleLayer } from 'react-map-gl/maplibre';
 
 // Infer types from server function - no Prisma import needed
 type TripsResponse = Awaited<ReturnType<typeof getActiveRides>>;
 type Trip = TripsResponse["trips"][number];
-
-const bikeLayer: CircleLayer = {
-  id: "bikes",
-  type: "circle",
-  paint: {
-    "circle-radius": 5,
-    "circle-color": "#ff0000",
-    "circle-opacity": 0.8,
-  },
-};
 
 export const BikeMap = () => {
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -61,7 +50,15 @@ export const BikeMap = () => {
       style={{ width: "100%", height: "100%" }}
     >
       <Source id="bikes" type="geojson" data={geojson}>
-        <Layer {...bikeLayer} />
+        <Layer
+          id="bikes"
+          type="circle"
+          paint={{
+            "circle-radius": 5,
+            "circle-color": "#ff0000",
+            "circle-opacity": 0.8,
+          }}
+        />
       </Source>
     </Map>
   );
