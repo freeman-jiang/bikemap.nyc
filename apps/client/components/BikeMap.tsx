@@ -5,9 +5,9 @@ import { getColorFromBikeType } from "@/utils/map";
 import polyline from "@mapbox/polyline";
 import along from "@turf/along";
 import bearing from "@turf/bearing";
-import { lineString } from "@turf/helpers";
+import distance from "@turf/distance";
+import { lineString, point } from "@turf/helpers";
 import length from "@turf/length";
-import lineSliceAlong from "@turf/line-slice-along";
 import type { GeoJSONSource } from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -28,6 +28,7 @@ type PreparedTrip = {
   endProgress: number; // 0-1, where on route the bike ends (for clipped trips)
   line: GeoJSON.Feature<GeoJSON.LineString>; // turf lineString for interpolation
   totalDistance: number; // in meters
+  cumulativeDistances: number[]; // Pre-computed cumulative distances for binary search
   currentBearing: number; // Current bearing for smooth rotation (mutable)
 };
 
@@ -77,6 +78,21 @@ function easeInOutEdges(t: number, edgePercent: number = 0.1): number {
   }
 }
 
+// Binary search to find index where cumulative distance >= target
+function binarySearchIndex(arr: number[], target: number): number {
+  let low = 0;
+  let high = arr.length - 1;
+  while (low < high) {
+    const mid = Math.floor((low + high) / 2);
+    if (arr[mid] < target) {
+      low = mid + 1;
+    } else {
+      high = mid;
+    }
+  }
+  return low;
+}
+
 function prepareTrips(data: {
   trips: Trip[];
   windowStartMs: number;
@@ -100,8 +116,17 @@ function prepareTrips(data: {
       // Create turf lineString and compute total distance
       const line = lineString(coordinates);
       const totalDistance = length(line, { units: "meters" });
-    
 
+      // Pre-compute cumulative distances for efficient trail slicing
+      const cumulativeDistances: number[] = [0];
+      for (let i = 1; i < coordinates.length; i++) {
+        const segmentDist = distance(
+          point(coordinates[i - 1]),
+          point(coordinates[i]),
+          { units: "meters" }
+        );
+        cumulativeDistances.push(cumulativeDistances[i - 1] + segmentDist);
+      }
 
       // Normalize times relative to window start (0 to windowDuration)
       const tripStartMs = new Date(trip.startedAt).getTime();
@@ -133,6 +158,7 @@ function prepareTrips(data: {
         endProgress,
         line,
         totalDistance,
+        cumulativeDistances,
         currentBearing: 0, // Start pointing North (up), will rotate during fade-in
       };
     })
@@ -281,23 +307,55 @@ function AnimationController(props: {
           const trailEnd = distanceAlongRoute;
 
           if (trailEnd - trailStart > 5) {
-            const trailSegment = lineSliceAlong(
-              trip.line,
-              trailStart,
-              trailEnd,
-              { units: "meters" }
-            );
+            // Use binary search + interpolation for exact endpoints
+            const coords = trip.line.geometry.coordinates;
+            const cumDist = trip.cumulativeDistances;
 
-            const trailFeature: GeoJSON.Feature = {
-              type: "Feature",
-              geometry: trailSegment.geometry,
-              properties: { id: trip.id },
-            };
+            // Find segment indices
+            const startIdx = binarySearchIndex(cumDist, trailStart);
+            const endIdx = binarySearchIndex(cumDist, trailEnd);
 
-            if (trip.color === "#60a5fa") {
-              trailFeaturesBlue.push(trailFeature);
-            } else {
-              trailFeaturesGray.push(trailFeature);
+            // Build trail coordinates with interpolated endpoints
+            const trailCoords: [number, number][] = [];
+
+            // Interpolate start point
+            const startSegIdx = Math.max(0, startIdx - 1);
+            if (startSegIdx < coords.length - 1) {
+              const segStart = cumDist[startSegIdx];
+              const segEnd = cumDist[startSegIdx + 1];
+              const t = segEnd > segStart ? (trailStart - segStart) / (segEnd - segStart) : 0;
+              const p0 = coords[startSegIdx];
+              const p1 = coords[startSegIdx + 1];
+              trailCoords.push([
+                p0[0] + t * (p1[0] - p0[0]),
+                p0[1] + t * (p1[1] - p0[1]),
+              ]);
+            }
+
+            // Add middle coordinates
+            for (let i = startIdx; i < endIdx && i < coords.length; i++) {
+              trailCoords.push(coords[i] as [number, number]);
+            }
+
+            // Interpolate end point (use bike's exact position)
+            const bikeCoord = point.geometry.coordinates as [number, number];
+            trailCoords.push(bikeCoord);
+
+            if (trailCoords.length >= 2) {
+              const trailFeature: GeoJSON.Feature = {
+                type: "Feature",
+                geometry: {
+                  type: "LineString",
+                  coordinates: trailCoords,
+                },
+                properties: { id: trip.id },
+              };
+
+              if (trip.color === "#60a5fa") {
+                trailFeaturesBlue.push(trailFeature);
+              } else {
+                trailFeaturesGray.push(trailFeature);
+              }
             }
           }
         }
