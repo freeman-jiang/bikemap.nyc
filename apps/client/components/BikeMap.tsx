@@ -7,6 +7,7 @@ import along from "@turf/along";
 import bearing from "@turf/bearing";
 import { lineString } from "@turf/helpers";
 import length from "@turf/length";
+import lineSliceAlong from "@turf/line-slice-along";
 import type { GeoJSONSource } from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -38,6 +39,9 @@ const FADE_DURATION_MS = 700;
 
 // Color transition duration after fade-in (in real time)
 const TRANSITION_DURATION_MS = 700;
+
+// Trail length in meters
+const TRAIL_LENGTH_METERS = 200;
 
 // Interpolate between two angles, handling 360°/0° wrapping
 function interpolateAngle(from: number, to: number, factor: number): number {
@@ -179,12 +183,23 @@ function AnimationController(props: {
         if (source) {
           source.setData(EMPTY_GEOJSON);
         }
+        // Clear trails
+        const trailSourceBlue = map.getSource("trails-blue") as
+          | GeoJSONSource
+          | undefined;
+        const trailSourceGray = map.getSource("trails-gray") as
+          | GeoJSONSource
+          | undefined;
+        trailSourceBlue?.setData(EMPTY_GEOJSON);
+        trailSourceGray?.setData(EMPTY_GEOJSON);
         ref.rafId = null;
         return;
       }
 
       // Build features for active trips
       const features: GeoJSON.Feature[] = [];
+      const trailFeaturesBlue: GeoJSON.Feature[] = [];
+      const trailFeaturesGray: GeoJSON.Feature[] = [];
       const fadeDurationSim = (FADE_DURATION_MS / 1000) * SPEEDUP * 1000;
       const transitionDurationSim = (TRANSITION_DURATION_MS / 1000) * SPEEDUP * 1000;
 
@@ -260,6 +275,33 @@ function AnimationController(props: {
           trip.currentBearing = bikeBearing; // Update for next frame
         }
 
+        // Calculate trail segment (only when bike is moving)
+        if (phase !== "fading-in" && phase !== "fading-out") {
+          const trailStart = Math.max(0, distanceAlongRoute - TRAIL_LENGTH_METERS);
+          const trailEnd = distanceAlongRoute;
+
+          if (trailEnd - trailStart > 5) {
+            const trailSegment = lineSliceAlong(
+              trip.line,
+              trailStart,
+              trailEnd,
+              { units: "meters" }
+            );
+
+            const trailFeature: GeoJSON.Feature = {
+              type: "Feature",
+              geometry: trailSegment.geometry,
+              properties: { id: trip.id },
+            };
+
+            if (trip.color === "#60a5fa") {
+              trailFeaturesBlue.push(trailFeature);
+            } else {
+              trailFeaturesGray.push(trailFeature);
+            }
+          }
+        }
+
         features.push({
           type: "Feature",
           geometry: point.geometry,
@@ -273,11 +315,27 @@ function AnimationController(props: {
         });
       }
 
-      // Update Mapbox source directly - bypasses React
+      // Update Mapbox sources directly - bypasses React
       const source = map.getSource("riders") as GeoJSONSource | undefined;
       if (source) {
         source.setData({ type: "FeatureCollection", features });
       }
+
+      // Update trail sources
+      const trailSourceBlue = map.getSource("trails-blue") as
+        | GeoJSONSource
+        | undefined;
+      const trailSourceGray = map.getSource("trails-gray") as
+        | GeoJSONSource
+        | undefined;
+      trailSourceBlue?.setData({
+        type: "FeatureCollection",
+        features: trailFeaturesBlue,
+      });
+      trailSourceGray?.setData({
+        type: "FeatureCollection",
+        features: trailFeaturesGray,
+      });
 
       ref.rafId = requestAnimationFrame((ts) => animateFnRef.current?.(ts));
     };
@@ -405,6 +463,47 @@ export const BikeMap = () => {
       mapStyle="mapbox://styles/mapbox/dark-v11"
       style={{ width: "100%", height: "100%" }}
     >
+      {/* Trail layers - rendered below bike icons */}
+      <Source id="trails-gray" type="geojson" data={EMPTY_GEOJSON} lineMetrics>
+        <Layer
+          id="trails-gray"
+          type="line"
+          layout={{ "line-cap": "round", "line-join": "round" }}
+          paint={{
+            "line-width": 3,
+            "line-gradient": [
+              "interpolate",
+              ["linear"],
+              ["line-progress"],
+              0,
+              "rgba(160, 160, 160, 0)",
+              1,
+              "rgba(160, 160, 160, 0.5)",
+            ],
+          }}
+        />
+      </Source>
+
+      <Source id="trails-blue" type="geojson" data={EMPTY_GEOJSON} lineMetrics>
+        <Layer
+          id="trails-blue"
+          type="line"
+          layout={{ "line-cap": "round", "line-join": "round" }}
+          paint={{
+            "line-width": 3,
+            "line-gradient": [
+              "interpolate",
+              ["linear"],
+              ["line-progress"],
+              0,
+              "rgba(96, 165, 250, 0)",
+              1,
+              "rgba(96, 165, 250, 0.5)",
+            ],
+          }}
+        />
+      </Source>
+
       <Source id="riders" type="geojson" data={EMPTY_GEOJSON}>
         <Layer
           id="riders"

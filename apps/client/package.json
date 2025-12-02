@@ -13,6 +13,7 @@
     "@turf/along": "^7.3.1",
     "@turf/helpers": "^7.3.1",
     "@turf/length": "^7.3.1",
+    "@turf/line-slice-along": "^7.3.1",
     "@types/mapbox-gl": "^3.4.1",
     "mapbox-gl": "^3.16.0",
     "next": "16.0.6",

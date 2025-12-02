@@ -12,6 +12,7 @@
         "@turf/along": "^7.3.1",
         "@turf/helpers": "^7.3.1",
         "@turf/length": "^7.3.1",
+        "@turf/line-slice-along": "^7.3.1",
         "@types/mapbox-gl": "^3.4.1",
         "mapbox-gl": "^3.16.0",
         "next": "16.0.6",
@@ -368,6 +369,8 @@
     "@turf/invariant": ["@turf/invariant@7.3.1", "", { "dependencies": { "@turf/helpers": "7.3.1", "@types/geojson": "^7946.0.10", "tslib": "^2.8.1" } }, "sha512-IdZJfDjIDCLH+Gu2yLFoSM7H23sdetIo5t4ET1/25X8gi3GE2XSqbZwaGjuZgNh02nisBewLqNiJs2bo+hrqZA=="],
 
     "@turf/length": ["@turf/length@7.3.1", "", { "dependencies": { "@turf/distance": "7.3.1", "@turf/helpers": "7.3.1", "@turf/meta": "7.3.1", "@types/geojson": "^7946.0.10", "tslib": "^2.8.1" } }, "sha512-QOr4qS3yi6qWIfQ/KLcy4rDLdemGCYpqz2YDh29R46seE+arSvlBI0KXvI36rPzgEMcUbQuVQyO65sOSqPaEjQ=="],
+
+    "@turf/line-slice-along": ["@turf/line-slice-along@7.3.1", "", { "dependencies": { "@turf/bearing": "7.3.1", "@turf/destination": "7.3.1", "@turf/distance": "7.3.1", "@turf/helpers": "7.3.1", "@types/geojson": "^7946.0.10" } }, "sha512-RizIhPytHxEewCyUCSMrZ5a58sQev0kZ0jzAV/9iTzvGfRD1VU/RG2ThLpSEqXYKBBSty98rTeSlnwsvZpAraA=="],
 
     "@turf/meta": ["@turf/meta@7.3.1", "", { "dependencies": { "@turf/helpers": "7.3.1", "@types/geojson": "^7946.0.10" } }, "sha512-NWsfOE5RVtWpLQNkfOF/RrYvLRPwwruxhZUV0UFIzHqfiRJ50aO9Y6uLY4bwCUe2TumLJQSR4yaoA72Rmr2mnQ=="],
 
