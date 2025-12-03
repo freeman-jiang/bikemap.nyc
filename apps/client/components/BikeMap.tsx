@@ -447,7 +447,15 @@ function updateTripState(trip: DeckTrip, currentTime: number): boolean {
   // Calculate bearing from current position to look-ahead point
   const dx = lookAheadX - trip.currentPosition[0];
   const dy = lookAheadY - trip.currentPosition[1];
-  const targetBearing = Math.atan2(dx, dy) * (180 / Math.PI);
+  let targetBearing = Math.atan2(dx, dy) * (180 / Math.PI);
+
+  // During fade-out, use final segment bearing (look-ahead equals current position, so dx=dy=0)
+  if (phase === "fading-out" && path.length >= 2) {
+    const lastIdx = path.length - 1;
+    const fdx = path[lastIdx][0] - path[lastIdx - 1][0];
+    const fdy = path[lastIdx][1] - path[lastIdx - 1][1];
+    targetBearing = Math.atan2(fdx, fdy) * (180 / Math.PI);
+  }
 
   // During fade-in, rotate from 0° (north) to target bearing
   trip.currentBearing = phase === "fading-in"
