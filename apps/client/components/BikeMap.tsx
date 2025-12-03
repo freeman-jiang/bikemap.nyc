@@ -3,7 +3,7 @@
 import { getRidesStartingIn, getTripsForChunk } from "@/app/server/trips";
 import { DataFilterExtension } from "@deck.gl/extensions";
 import { TripsLayer } from "@deck.gl/geo-layers";
-import { IconLayer } from "@deck.gl/layers";
+import { IconLayer, PathLayer } from "@deck.gl/layers";
 import { DeckGL } from "@deck.gl/react";
 import polyline from "@mapbox/polyline";
 import distance from "@turf/distance";
@@ -12,6 +12,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Map as MapboxMap } from "react-map-gl/mapbox";
 
+import { LinearInterpolator } from "@deck.gl/core";
 import type { Color, MapViewState } from "@deck.gl/core";
 
 // Infer types from server function
@@ -39,6 +40,7 @@ type DeckTrip = {
   currentPhase: Phase;
   currentPhaseProgress: number;
   isVisible: boolean;
+  isSelected: boolean;
 };
 
 // Animation config - all times in seconds
@@ -66,6 +68,7 @@ const THEME = {
   trailColor1: [125, 207, 255] as Color, // sky blue
   fadeInColor: [115, 255, 140] as Color, // vibrant mint green
   fadeOutColor: [247, 118, 142] as Color, // pink
+  selectedColor: [255, 165, 0] as Color, // orange
 };
 
 // Arrow icon for bike heads
@@ -89,7 +92,11 @@ const INITIAL_VIEW_STATE: MapViewState = {
 const getPath = (d: DeckTrip) => d.path;
 const getTimestamps = (d: DeckTrip) => d.timestamps;
 const getTripColor = (d: DeckTrip) =>
-  d.bikeType === "electric_bike" ? THEME.trailColor1 : THEME.trailColor0;
+  d.isSelected
+    ? THEME.selectedColor
+    : d.bikeType === "electric_bike"
+      ? THEME.trailColor1
+      : THEME.trailColor0;
 
 // =============================================================================
 // Color utilities (gl-matrix style)
@@ -131,6 +138,7 @@ const COLORS = {
   fadeOut: [247, 118, 142] as const,
   electric: [125, 207, 255] as const,
   classic: [187, 154, 247] as const,
+  selected: [255, 165, 0] as const,
 } as const
 
 // Single output buffer (mutated and reused each call)
@@ -148,6 +156,17 @@ const getBikeHeadAngle = (d: DeckTrip) => -d.currentBearing;
 const getBikeHeadIcon = () => "arrow";
 const getBikeHeadSize = () => 9;
 const getBikeHeadColor = (d: DeckTrip): Color4 => {
+  // Selected trips are always orange (still respect alpha for fading)
+  if (d.isSelected) {
+    const alpha =
+      d.currentPhase === "fading-in"
+        ? d.currentPhaseProgress * MAX_ALPHA
+        : d.currentPhase === "fading-out"
+          ? (1 - d.currentPhaseProgress) * MAX_ALPHA
+          : MAX_ALPHA;
+    return color4.set(colorScratch, COLORS.selected, alpha);
+  }
+
   const bikeColor = d.bikeType === "electric_bike" ? COLORS.electric : COLORS.classic;
 
   switch (d.currentPhase) {
@@ -303,6 +322,7 @@ function prepareTripsForDeck(data: {
         currentPhase: "fading-in" as Phase,
         currentPhaseProgress: 0,
         isVisible: false,
+        isSelected: false,
       };
     })
     .filter((trip): trip is DeckTrip => trip !== null);
@@ -449,6 +469,8 @@ export const BikeMap = () => {
   const [tripCount, setTripCount] = useState(0);
   const [time, setTime] = useState(0); // seconds from window start
   const [animState, setAnimState] = useState<AnimationState>("idle");
+  const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
+  const [initialViewState, setInitialViewState] = useState<MapViewState>(INITIAL_VIEW_STATE);
 
   const rafRef = useRef<number | null>(null);
   const lastTimestampRef = useRef<number | null>(null);
@@ -644,6 +666,14 @@ export const BikeMap = () => {
     loadInitial();
   }, [windowStartMs, loadUpcomingRides, play]);
 
+  // Select a random visible biker
+  const selectRandomBiker = useCallback(() => {
+    const visibleTrips = activeTrips.filter((t) => t.isVisible);
+    if (visibleTrips.length === 0) return;
+    const randomTrip = visibleTrips[Math.floor(Math.random() * visibleTrips.length)];
+    setSelectedTripId(randomTrip.id);
+  }, [activeTrips]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -661,11 +691,54 @@ export const BikeMap = () => {
   useMemo(() => {
     for (const trip of activeTrips) {
       updateTripState(trip, time);
+      // Only set isSelected if there's actually a selection (avoid work when no selection)
+      if (selectedTripId !== null) {
+        trip.isSelected = trip.id === selectedTripId;
+      }
     }
-  }, [activeTrips, time]);
+  }, [activeTrips, time, selectedTripId]);
+
+  // Camera follow effect - use LinearInterpolator for smooth transitions
+  useEffect(() => {
+    if (selectedTripId === null) return;
+    const trip = activeTrips.find((t) => t.id === selectedTripId);
+    if (trip?.isVisible) {
+      setInitialViewState((prev) => ({
+        ...prev,
+        longitude: trip.currentPosition[0],
+        latitude: trip.currentPosition[1],
+        transitionDuration: 100,
+        transitionInterpolator: new LinearInterpolator(["longitude", "latitude"]),
+      }));
+    } else {
+      // Selected trip is no longer visible - clear selection
+      setSelectedTripId(null);
+    }
+  }, [activeTrips, time, selectedTripId]);
+
+  // Memoize selected trip data separately to avoid filtering every frame
+  const selectedTripData = useMemo(
+    () => (selectedTripId ? activeTrips.filter((t) => t.id === selectedTripId) : []),
+    [activeTrips, selectedTripId]
+  );
 
   const layers = useMemo(
     () => [
+      // Selected biker's full route (rendered underneath trails, only when selected)
+      ...(selectedTripData.length > 0
+        ? [
+            new PathLayer<DeckTrip>({
+              id: "selected-route",
+              data: selectedTripData,
+              getPath: (d) => d.path,
+              getColor: THEME.selectedColor,
+              getWidth: 4,
+              widthMinPixels: 2,
+              opacity: 0.4,
+              pickable: false,
+            }),
+          ]
+        : []),
       new TripsLayer<DeckTrip>({
         id: "trips",
         data: activeTrips,
@@ -678,6 +751,9 @@ export const BikeMap = () => {
         trailLength: TRAIL_LENGTH_SECONDS,
         currentTime: time,
         pickable: false,
+        updateTriggers: {
+          getColor: [selectedTripId],
+        },
       }),
       new IconLayer({
         id: "bike-heads",
@@ -699,18 +775,18 @@ export const BikeMap = () => {
         updateTriggers: {
           getPosition: [time],
           getAngle: [time],
-          getColor: [time],
+          getColor: [time, selectedTripId],
         },
       }),
     ],
-    [activeTrips, time]
+    [activeTrips, time, selectedTripId, selectedTripData]
   );
 
   return (
     <div className="relative w-full h-full">
       <DeckGL
         layers={layers}
-        initialViewState={INITIAL_VIEW_STATE}
+        initialViewState={initialViewState}
         controller={true}
       >
         <MapboxMap
@@ -737,7 +813,7 @@ export const BikeMap = () => {
       </div>
 
       {/* Play/Replay controls - top left */}
-      <div className="absolute top-4 left-4 z-10">
+      <div className="absolute top-4 left-4 z-10 flex gap-2">
         {animState === "idle" && (
           <button
             onClick={play}
@@ -747,9 +823,17 @@ export const BikeMap = () => {
           </button>
         )}
         {animState === "playing" && (
-          <div className="bg-gray-800 text-white font-medium px-4 py-2 rounded-lg shadow-lg">
-            Playing...
-          </div>
+          <>
+            <div className="bg-gray-800 text-white font-medium px-4 py-2 rounded-lg shadow-lg">
+              Playing...
+            </div>
+            <button
+              onClick={selectRandomBiker}
+              className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 rounded-lg shadow-lg transition-colors"
+            >
+              Random Biker
+            </button>
+          </>
         )}
         {animState === "finished" && (
           <button
