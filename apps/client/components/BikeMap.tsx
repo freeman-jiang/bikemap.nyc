@@ -2,12 +2,13 @@
 
 import { getRidesStartingIn, getTripsForChunk } from "@/app/server/trips";
 import { TripsLayer } from "@deck.gl/geo-layers";
+import { IconLayer } from "@deck.gl/layers";
 import { DeckGL } from "@deck.gl/react";
 import polyline from "@mapbox/polyline";
 import distance from "@turf/distance";
 import { point } from "@turf/helpers";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Map as MapboxMap } from "react-map-gl/mapbox";
 
 import type { Color, MapViewState } from "@deck.gl/core";
@@ -25,10 +26,11 @@ type DeckTrip = {
   timestamps: number[]; // seconds from window start
   vendor: number; // 0 = classic, 1 = electric
   endTimeSeconds: number; // when trip ends (seconds from window start)
+  cumulativeDistances: number[]; // meters from route start
 };
 
 // Animation config - all times in seconds
-const SPEEDUP = 150;
+const SPEEDUP = 100;
 const TRAIL_LENGTH_SECONDS = 60; // 1 minute of trail
 
 // Chunking config
@@ -43,6 +45,15 @@ const THEME = {
   trailColor0: [160, 160, 160] as Color, // gray - classic bikes
   trailColor1: [96, 165, 250] as Color, // blue - electric bikes
 };
+
+// Arrow icon for bike heads
+const ARROW_SVG = `data:image/svg+xml;base64,${btoa(`
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<g transform="rotate(45 12 12)">
+    <path d="M4.037 4.688a.495.495 0 0 1 .651-.651l16 6.5a.5.5 0 0 1-.063.947l-6.124 1.58a2 2 0 0 0-1.438 1.435l-1.579 6.126a.5.5 0 0 1-.947.063z"/>
+</g>
+</svg>
+`)}`;
 
 const INITIAL_VIEW_STATE: MapViewState = {
   longitude: -74.0,
@@ -124,11 +135,81 @@ function prepareTripsForDeck(data: {
         timestamps,
         vendor: trip.rideableType === "electric_bike" ? 1 : 0,
         endTimeSeconds: tripEndSeconds,
+        cumulativeDistances,
       };
     })
     .filter((trip): trip is DeckTrip => trip !== null);
 
   return prepared;
+}
+
+// Get interpolated position and bearing for a trip at a given time
+function getBikeState(
+  trip: DeckTrip,
+  currentTime: number
+): { position: [number, number]; bearing: number } | null {
+  const { timestamps, path } = trip;
+
+  // Not started yet or already ended
+  if (currentTime < timestamps[0] || currentTime > timestamps[timestamps.length - 1]) {
+    return null;
+  }
+
+  // Binary search to find segment
+  let lo = 0;
+  let hi = timestamps.length - 1;
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    if (timestamps[mid] < currentTime) lo = mid + 1;
+    else hi = mid;
+  }
+
+  const idx = Math.max(0, lo - 1);
+  if (idx >= path.length - 1) {
+    return { position: path[path.length - 1], bearing: 0 };
+  }
+
+  // Interpolate between points
+  const t0 = timestamps[idx];
+  const t1 = timestamps[idx + 1];
+  const t = t1 > t0 ? (currentTime - t0) / (t1 - t0) : 0;
+
+  const p0 = path[idx];
+  const p1 = path[idx + 1];
+  const position: [number, number] = [
+    p0[0] + t * (p1[0] - p0[0]),
+    p0[1] + t * (p1[1] - p0[1]),
+  ];
+
+  // Look ahead ~50m (or to end of route if less than 50m remaining)
+  const cumDist = trip.cumulativeDistances;
+  const currentDist = cumDist[idx] + t * (cumDist[idx + 1] - cumDist[idx]);
+  const totalDist = cumDist[cumDist.length - 1];
+  const lookAheadDist = Math.min(currentDist + 20, totalDist);
+
+  // Find look-ahead position
+  let laIdx = idx;
+  while (laIdx < cumDist.length - 1 && cumDist[laIdx + 1] < lookAheadDist) {
+    laIdx++;
+  }
+
+  // Interpolate look-ahead point
+  const laD0 = cumDist[laIdx];
+  const laD1 = cumDist[laIdx + 1] ?? laD0;
+  const laFrac = laD1 > laD0 ? (lookAheadDist - laD0) / (laD1 - laD0) : 0;
+  const laP0 = path[laIdx];
+  const laP1 = path[laIdx + 1] ?? laP0;
+  const lookAheadPos: [number, number] = [
+    laP0[0] + laFrac * (laP1[0] - laP0[0]),
+    laP0[1] + laFrac * (laP1[1] - laP0[1]),
+  ];
+
+  // Calculate bearing from current position to look-ahead point
+  const dx = lookAheadPos[0] - position[0];
+  const dy = lookAheadPos[1] - position[1];
+  const bearing = Math.atan2(dx, dy) * (180 / Math.PI);
+
+  return { position, bearing };
 }
 
 export const BikeMap = () => {
@@ -337,6 +418,18 @@ export const BikeMap = () => {
     throw new Error("NEXT_PUBLIC_MAPBOX_TOKEN is not set");
   }
 
+  // Calculate current bike head positions and bearings
+  const bikeHeads = useMemo(() => {
+    const heads: { position: [number, number]; bearing: number; id: string; vendor: number }[] = [];
+    for (const trip of activeTrips) {
+      const state = getBikeState(trip, time);
+      if (state) {
+        heads.push({ ...state, id: trip.id, vendor: trip.vendor });
+      }
+    }
+    return heads;
+  }, [activeTrips, time]);
+
   const layers = [
     new TripsLayer<DeckTrip>({
       id: "trips",
@@ -349,6 +442,23 @@ export const BikeMap = () => {
       rounded: true,
       trailLength: TRAIL_LENGTH_SECONDS,
       currentTime: time,
+    }),
+    new IconLayer({
+      id: "bike-heads",
+      data: bikeHeads,
+      getPosition: (d) => d.position,
+      getAngle: (d) => -d.bearing,
+      getIcon: () => "arrow",
+      getSize: 8,
+      getColor: (d) => (d.vendor === 0 ? THEME.trailColor0 : THEME.trailColor1),
+      iconAtlas: ARROW_SVG,
+      iconMapping: {
+        arrow: { x: 0, y: 0, width: 24, height: 24, anchorX: 12, anchorY: 12, mask: true },
+      },
+      updateTriggers: {
+        getPosition: [bikeHeads],
+        getAngle: [bikeHeads],
+      },
     }),
   ];
 
