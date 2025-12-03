@@ -310,8 +310,8 @@ function getBikeState(
   const totalDist = cumDist[cumDist.length - 1];
   const lookAheadDist = Math.min(currentDist + 20, totalDist);
 
-  // Find look-ahead position
-  let laIdx = 0;
+  // Find look-ahead position (start from current idx since look-ahead is only ~20m ahead)
+  let laIdx = idx;
   while (laIdx < cumDist.length - 1 && cumDist[laIdx + 1] < lookAheadDist) {
     laIdx++;
   }
