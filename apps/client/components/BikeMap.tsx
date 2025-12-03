@@ -35,6 +35,7 @@ type DeckTrip = {
 // Animation config - all times in seconds
 const SPEEDUP = 100;
 const TRAIL_LENGTH_SECONDS = 45;
+const EASE_DISTANCE_METERS = 300; // Fixed easing distance at start/end of trips
 
 // Fade/transition duration in real milliseconds (matches original)
 const FADE_DURATION_MS = 700;
@@ -49,12 +50,12 @@ const CHUNK_SIZE_SECONDS = 15 * 60; // 15 minutes in seconds
 const LOOKAHEAD_CHUNKS = 1;
 
 // Animation start time
-const WINDOW_START = new Date("2025-06-08T16:00:00.000Z"); // 4am UTC (midnight EDT)
+const WINDOW_START = new Date("2025-06-08T17:00:00.000Z"); // 4am EDT (8am UTC)
 
 const THEME = {
   trailColor0: [187, 154, 247] as Color, // purple
   trailColor1: [125, 207, 255] as Color, // sky blue
-  fadeInColor: [158, 206, 106] as Color, // soft green
+  fadeInColor: [115, 255, 140] as Color, // vibrant mint green
   fadeOutColor: [247, 118, 142] as Color, // pink
 };
 
@@ -94,6 +95,42 @@ function interpolateAngle(from: number, to: number, factor: number): number {
   if (diff > 180) diff -= 360;
   if (diff < -180) diff += 360;
   return ((from + diff * factor) % 360 + 360) % 360;
+}
+
+// Compute time fraction from distance, with fixed-distance easing at edges
+// Makes bikes slow at start/end (docking) and constant speed in middle
+function getTimeFraction(dist: number, totalDist: number): number {
+  if (totalDist <= 0) return 0;
+
+  // Scale down ease distance for short trips (max 25% of trip at each end)
+  const easeDist = Math.min(EASE_DISTANCE_METERS, totalDist / 4);
+
+  const easeInEnd = easeDist;
+  const easeOutStart = totalDist - easeDist;
+  const linearDist = totalDist - 2 * easeDist;
+
+  // Time allocation: easing phases take 2x the time per meter
+  const totalTime = 2 * easeDist + linearDist + 2 * easeDist;
+  const easeInTime = 2 * easeDist;
+  const linearTime = linearDist;
+
+  if (dist < easeInEnd) {
+    // INVERSE quadratic ease-in: time = sqrt(position) for slow start
+    const t = dist / easeDist;
+    const timeInEase = Math.sqrt(t);
+    return (timeInEase * easeInTime) / totalTime;
+  } else if (dist > easeOutStart) {
+    // INVERSE quadratic ease-out: slow end
+    const distIntoEaseOut = dist - easeOutStart;
+    const t = distIntoEaseOut / easeDist;
+    const timeInEase = 1 - Math.sqrt(1 - t);
+    const timeBeforeEaseOut = easeInTime + linearTime;
+    return (timeBeforeEaseOut + timeInEase * easeInTime) / totalTime;
+  } else {
+    // Linear middle
+    const distIntoLinear = dist - easeInEnd;
+    return (easeInTime + distIntoLinear) / totalTime;
+  }
 }
 
 // Prepare trips for deck.gl TripsLayer format with timestamps in seconds from window start
@@ -145,10 +182,10 @@ function prepareTripsForDeck(data: {
       const tripEndSeconds = (tripEndMs - windowStartMs) / 1000;
       const tripDurationSeconds = tripEndSeconds - tripStartSeconds;
 
-      // Generate timestamps for each coordinate based on distance fraction
+      // Generate timestamps with easing: slow at start/end (100m), fast in middle
       const timestamps = cumulativeDistances.map((dist) => {
-        const fraction = totalDistance > 0 ? dist / totalDistance : 0;
-        return tripStartSeconds + fraction * tripDurationSeconds;
+        const timeFraction = getTimeFraction(dist, totalDistance);
+        return tripStartSeconds + timeFraction * tripDurationSeconds;
       });
 
       return {
@@ -418,9 +455,9 @@ export const BikeMap = () => {
     const nextChunk = currentChunk + LOOKAHEAD_CHUNKS + 1;
     loadUpcomingRides(nextChunk);
 
-    // Remove trips that have ended
+    // Remove trips that have fully finished (including fade-out)
     for (const [id, trip] of tripMapRef.current) {
-      if (trip.endTimeSeconds < time) {
+      if (trip.visibleEndSeconds < time) {
         tripMapRef.current.delete(id);
       }
     }
