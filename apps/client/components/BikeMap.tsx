@@ -122,7 +122,8 @@ function getTimeFraction(dist: number, totalDist: number): number {
   } else if (dist > easeOutStart) {
     // INVERSE quadratic ease-out: slow end
     const distIntoEaseOut = dist - easeOutStart;
-    const t = distIntoEaseOut / easeDist;
+    // Clamp t to prevent NaN from floating point errors at boundary
+    const t = Math.min(1, distIntoEaseOut / easeDist);
     const timeInEase = 1 - Math.sqrt(1 - t);
     const timeBeforeEaseOut = easeInTime + linearTime;
     return (timeBeforeEaseOut + timeInEase * easeInTime) / totalTime;
