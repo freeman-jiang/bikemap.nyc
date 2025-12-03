@@ -25,13 +25,24 @@ type DeckTrip = {
   path: [number, number][];
   timestamps: number[]; // seconds from window start
   vendor: number; // 0 = classic, 1 = electric
-  endTimeSeconds: number; // when trip ends (seconds from window start)
+  startTimeSeconds: number; // actual trip start (movement begins after transition)
+  endTimeSeconds: number; // actual trip end (movement stops, fade-out begins)
+  visibleStartSeconds: number; // when bike first appears (fade-in starts)
+  visibleEndSeconds: number; // when bike disappears (fade-out ends)
   cumulativeDistances: number[]; // meters from route start
 };
 
 // Animation config - all times in seconds
 const SPEEDUP = 100;
 const TRAIL_LENGTH_SECONDS = 60; // 1 minute of trail
+
+// Fade/transition duration in real milliseconds (matches original)
+const FADE_DURATION_MS = 700;
+const TRANSITION_DURATION_MS = 700;
+
+// Convert to simulation seconds: realMs / 1000 * SPEEDUP
+const FADE_DURATION_SIM_SECONDS = (FADE_DURATION_MS / 1000) * SPEEDUP;
+const TRANSITION_DURATION_SIM_SECONDS = (TRANSITION_DURATION_MS / 1000) * SPEEDUP;
 
 // Chunking config
 const CHUNK_SIZE_SECONDS = 15 * 60; // 15 minutes in seconds
@@ -44,6 +55,8 @@ const WINDOW_START = new Date("2025-06-08T17:00:00.000Z"); // 1pm EDT
 const THEME = {
   trailColor0: [160, 160, 160] as Color, // gray - classic bikes
   trailColor1: [96, 165, 250] as Color, // blue - electric bikes
+  fadeInColor: [34, 197, 94] as Color, // green #22c55e
+  fadeOutColor: [239, 68, 68] as Color, // red #ef4444
 };
 
 // Arrow icon for bike heads
@@ -73,6 +86,16 @@ const formatTime = (ms: number) =>
     hour12: true,
     timeZone: "America/New_York",
   });
+
+// Interpolate between two angles, handling 360°/0° wrapping
+function interpolateAngle(from: number, to: number, factor: number): number {
+  from = ((from % 360) + 360) % 360;
+  to = ((to % 360) + 360) % 360;
+  let diff = to - from;
+  if (diff > 180) diff -= 360;
+  if (diff < -180) diff += 360;
+  return ((from + diff * factor) % 360 + 360) % 360;
+}
 
 // Prepare trips for deck.gl TripsLayer format with timestamps in seconds from window start
 function prepareTripsForDeck(data: {
@@ -134,7 +157,10 @@ function prepareTripsForDeck(data: {
         path: coordinates,
         timestamps,
         vendor: trip.rideableType === "electric_bike" ? 1 : 0,
+        startTimeSeconds: tripStartSeconds,
         endTimeSeconds: tripEndSeconds,
+        visibleStartSeconds: tripStartSeconds - FADE_DURATION_SIM_SECONDS - TRANSITION_DURATION_SIM_SECONDS,
+        visibleEndSeconds: tripEndSeconds + FADE_DURATION_SIM_SECONDS,
         cumulativeDistances,
       };
     })
@@ -143,52 +169,111 @@ function prepareTripsForDeck(data: {
   return prepared;
 }
 
-// Get interpolated position and bearing for a trip at a given time
+// Get interpolated position, bearing, and phase for a trip at a given time
 function getBikeState(
   trip: DeckTrip,
   currentTime: number
-): { position: [number, number]; bearing: number } | null {
-  const { timestamps, path } = trip;
+): { position: [number, number]; bearing: number; phase: string; phaseProgress: number } | null {
+  const {
+    timestamps,
+    path,
+    startTimeSeconds,
+    endTimeSeconds,
+    visibleStartSeconds,
+    visibleEndSeconds,
+    cumulativeDistances,
+  } = trip;
 
-  // Not started yet or already ended
-  if (currentTime < timestamps[0] || currentTime > timestamps[timestamps.length - 1]) {
+  // Not visible yet or already gone
+  if (currentTime < visibleStartSeconds || currentTime > visibleEndSeconds) {
     return null;
   }
 
-  // Binary search to find segment
-  let lo = 0;
-  let hi = timestamps.length - 1;
-  while (lo < hi) {
-    const mid = Math.floor((lo + hi) / 2);
-    if (timestamps[mid] < currentTime) lo = mid + 1;
-    else hi = mid;
+  // Calculate phase boundaries (matching original timing exactly)
+  const fadeInEnd = visibleStartSeconds + FADE_DURATION_SIM_SECONDS;
+  const transitionInEnd = fadeInEnd + TRANSITION_DURATION_SIM_SECONDS; // = startTimeSeconds
+  const fadeOutStart = endTimeSeconds; // movement stops at actual trip end
+
+  // Determine phase and progress
+  let phase: string;
+  let phaseProgress: number;
+
+  if (currentTime < fadeInEnd) {
+    phase = "fading-in";
+    phaseProgress = (currentTime - visibleStartSeconds) / FADE_DURATION_SIM_SECONDS;
+  } else if (currentTime < transitionInEnd) {
+    phase = "transitioning-in";
+    phaseProgress = (currentTime - fadeInEnd) / TRANSITION_DURATION_SIM_SECONDS;
+  } else if (currentTime >= fadeOutStart) {
+    phase = "fading-out";
+    phaseProgress = (currentTime - fadeOutStart) / FADE_DURATION_SIM_SECONDS;
+  } else {
+    phase = "moving";
+    phaseProgress = 1;
   }
 
-  const idx = Math.max(0, lo - 1);
-  if (idx >= path.length - 1) {
-    return { position: path[path.length - 1], bearing: 0 };
+  // Calculate position based on phase
+  let position: [number, number];
+  let idx = 0;
+  let t = 0;
+
+  if (phase === "fading-in") {
+    // Stationary at start position
+    position = path[0];
+  } else if (phase === "fading-out") {
+    // Stationary at end position
+    position = path[path.length - 1];
+    idx = path.length - 2;
+    t = 1;
+  } else {
+    // transitioning-in or moving: interpolate along route
+    // Movement starts at transitionInEnd (= startTimeSeconds) and ends at fadeOutStart (= endTimeSeconds)
+    const movingStart = transitionInEnd;
+    const movingEnd = fadeOutStart;
+    const movingDuration = movingEnd - movingStart;
+    const movingProgress = Math.max(0, Math.min(1, (currentTime - movingStart) / movingDuration));
+
+    // Map to timestamp along route
+    const tripTime = timestamps[0] + movingProgress * (timestamps[timestamps.length - 1] - timestamps[0]);
+
+    // Binary search to find segment
+    let lo = 0;
+    let hi = timestamps.length - 1;
+    while (lo < hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      if (timestamps[mid] < tripTime) lo = mid + 1;
+      else hi = mid;
+    }
+
+    idx = Math.max(0, lo - 1);
+    if (idx >= path.length - 1) {
+      position = path[path.length - 1];
+    } else {
+      const t0 = timestamps[idx];
+      const t1 = timestamps[idx + 1];
+      t = t1 > t0 ? (tripTime - t0) / (t1 - t0) : 0;
+
+      const p0 = path[idx];
+      const p1 = path[idx + 1];
+      position = [
+        p0[0] + t * (p1[0] - p0[0]),
+        p0[1] + t * (p1[1] - p0[1]),
+      ];
+    }
   }
 
-  // Interpolate between points
-  const t0 = timestamps[idx];
-  const t1 = timestamps[idx + 1];
-  const t = t1 > t0 ? (currentTime - t0) / (t1 - t0) : 0;
-
-  const p0 = path[idx];
-  const p1 = path[idx + 1];
-  const position: [number, number] = [
-    p0[0] + t * (p1[0] - p0[0]),
-    p0[1] + t * (p1[1] - p0[1]),
-  ];
-
-  // Look ahead ~50m (or to end of route if less than 50m remaining)
-  const cumDist = trip.cumulativeDistances;
-  const currentDist = cumDist[idx] + t * (cumDist[idx + 1] - cumDist[idx]);
+  // Calculate bearing using look-ahead point (~20m ahead)
+  const cumDist = cumulativeDistances;
+  const currentDist = phase === "fading-in"
+    ? 0
+    : phase === "fading-out"
+      ? cumDist[cumDist.length - 1]
+      : cumDist[idx] + t * ((cumDist[idx + 1] ?? cumDist[idx]) - cumDist[idx]);
   const totalDist = cumDist[cumDist.length - 1];
   const lookAheadDist = Math.min(currentDist + 20, totalDist);
 
   // Find look-ahead position
-  let laIdx = idx;
+  let laIdx = 0;
   while (laIdx < cumDist.length - 1 && cumDist[laIdx + 1] < lookAheadDist) {
     laIdx++;
   }
@@ -207,9 +292,14 @@ function getBikeState(
   // Calculate bearing from current position to look-ahead point
   const dx = lookAheadPos[0] - position[0];
   const dy = lookAheadPos[1] - position[1];
-  const bearing = Math.atan2(dx, dy) * (180 / Math.PI);
+  const targetBearing = Math.atan2(dx, dy) * (180 / Math.PI);
 
-  return { position, bearing };
+  // During fade-in, rotate from 0° (north) to target bearing
+  const bearing = phase === "fading-in"
+    ? interpolateAngle(0, targetBearing, phaseProgress)
+    : targetBearing;
+
+  return { position, bearing, phase, phaseProgress };
 }
 
 export const BikeMap = () => {
@@ -418,9 +508,16 @@ export const BikeMap = () => {
     throw new Error("NEXT_PUBLIC_MAPBOX_TOKEN is not set");
   }
 
-  // Calculate current bike head positions and bearings
+  // Calculate current bike head positions, bearings, and phases
   const bikeHeads = useMemo(() => {
-    const heads: { position: [number, number]; bearing: number; id: string; vendor: number }[] = [];
+    const heads: {
+      position: [number, number];
+      bearing: number;
+      id: string;
+      vendor: number;
+      phase: string;
+      phaseProgress: number;
+    }[] = [];
     for (const trip of activeTrips) {
       const state = getBikeState(trip, time);
       if (state) {
@@ -451,7 +548,32 @@ export const BikeMap = () => {
       getAngle: (d) => -d.bearing,
       getIcon: () => "arrow",
       getSize: 8,
-      getColor: (d) => (d.vendor === 0 ? THEME.trailColor0 : THEME.trailColor1),
+      getColor: (d) => {
+        const bikeColor = d.vendor === 0 ? THEME.trailColor0 : THEME.trailColor1;
+        const maxAlpha = 0.8 * 255;
+
+        if (d.phase === "fading-in") {
+          // Green, fading in
+          const alpha = d.phaseProgress * maxAlpha;
+          return [THEME.fadeInColor[0], THEME.fadeInColor[1], THEME.fadeInColor[2], alpha];
+        }
+        if (d.phase === "transitioning-in") {
+          // Interpolate green → bike color
+          return [
+            THEME.fadeInColor[0] + (bikeColor[0] - THEME.fadeInColor[0]) * d.phaseProgress,
+            THEME.fadeInColor[1] + (bikeColor[1] - THEME.fadeInColor[1]) * d.phaseProgress,
+            THEME.fadeInColor[2] + (bikeColor[2] - THEME.fadeInColor[2]) * d.phaseProgress,
+            maxAlpha,
+          ];
+        }
+        if (d.phase === "fading-out") {
+          // Red, fading out
+          const alpha = (1 - d.phaseProgress) * maxAlpha;
+          return [THEME.fadeOutColor[0], THEME.fadeOutColor[1], THEME.fadeOutColor[2], alpha];
+        }
+        // moving - bike color at full opacity
+        return [bikeColor[0], bikeColor[1], bikeColor[2], maxAlpha];
+      },
       iconAtlas: ARROW_SVG,
       iconMapping: {
         arrow: { x: 0, y: 0, width: 24, height: 24, anchorX: 12, anchorY: 12, mask: true },
@@ -459,6 +581,7 @@ export const BikeMap = () => {
       updateTriggers: {
         getPosition: [bikeHeads],
         getAngle: [bikeHeads],
+        getColor: [bikeHeads],
       },
     }),
   ];
