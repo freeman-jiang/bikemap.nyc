@@ -350,6 +350,8 @@ export const BikeMap = () => {
 
   const rafRef = useRef<number | null>(null);
   const lastTimestampRef = useRef<number | null>(null);
+  const fpsRef = useRef<HTMLDivElement>(null);
+  const smoothedFpsRef = useRef(60);
   const tripMapRef = useRef<Map<string, DeckTrip>>(new Map());
   const loadingChunksRef = useRef<Set<number>>(new Set());
   const loadedChunksRef = useRef<Set<number>>(new Set());
@@ -481,6 +483,11 @@ export const BikeMap = () => {
         const deltaMs = timestamp - lastTimestampRef.current;
         const deltaSeconds = deltaMs / 1000;
         setTime((t) => t + deltaSeconds * SPEEDUP);
+        const currentFps = 1000 / deltaMs;
+        smoothedFpsRef.current = smoothedFpsRef.current * 0.9 + currentFps * 0.1;
+        if (fpsRef.current) {
+          fpsRef.current.textContent = `${Math.round(smoothedFpsRef.current)} FPS`;
+        }
       }
       lastTimestampRef.current = timestamp;
       rafRef.current = requestAnimationFrame(tick);
@@ -651,6 +658,7 @@ export const BikeMap = () => {
         <div className="bg-white/10 backdrop-blur-xl text-white text-xs px-3 py-2 rounded-lg">
           <div className="font-medium mb-1">Active Trips</div>
           <div className="text-lg font-bold">{tripCount.toLocaleString()}</div>
+          <div ref={fpsRef} className="text-white/60 mt-1">-- FPS</div>
         </div>
       </div>
 
