@@ -316,10 +316,20 @@ function prepareTripsForDeck(data: {
       const fadeInEndSeconds = visibleStartSeconds + FADE_DURATION_SIM_SECONDS;
       const transitionInEndSeconds = fadeInEndSeconds + TRANSITION_DURATION_SIM_SECONDS;
 
-      // Precompute first segment bearing (for fade-in)
-      const fdx0 = coordinates[1][0] - coordinates[0][0];
-      const fdy0 = coordinates[1][1] - coordinates[0][1];
-      const firstSegmentBearing = Math.atan2(fdx0, fdy0) * (180 / Math.PI);
+      // Precompute fade-in bearing using 20m look-ahead (matches original behavior)
+      const lookAheadDistPrep = Math.min(20, totalDistance);
+      let laIdxPrep = 0;
+      while (laIdxPrep < cumulativeDistances.length - 1 && cumulativeDistances[laIdxPrep + 1] < lookAheadDistPrep) {
+        laIdxPrep++;
+      }
+      const laD0Prep = cumulativeDistances[laIdxPrep];
+      const laD1Prep = cumulativeDistances[laIdxPrep + 1] ?? laD0Prep;
+      const laFracPrep = laD1Prep > laD0Prep ? (lookAheadDistPrep - laD0Prep) / (laD1Prep - laD0Prep) : 0;
+      const laP0Prep = coordinates[laIdxPrep];
+      const laP1Prep = coordinates[laIdxPrep + 1] ?? laP0Prep;
+      const lookAheadXPrep = laP0Prep[0] + laFracPrep * (laP1Prep[0] - laP0Prep[0]);
+      const lookAheadYPrep = laP0Prep[1] + laFracPrep * (laP1Prep[1] - laP0Prep[1]);
+      const firstSegmentBearing = Math.atan2(lookAheadXPrep - coordinates[0][0], lookAheadYPrep - coordinates[0][1]) * (180 / Math.PI);
 
       // Precompute last segment bearing (for fade-out)
       const lastIdx = coordinates.length - 1;
