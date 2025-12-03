@@ -24,7 +24,7 @@ type DeckTrip = {
   id: string;
   path: [number, number][];
   timestamps: number[]; // seconds from window start
-  vendor: number; // 0 = classic, 1 = electric
+  bikeType: string;
   startTimeSeconds: number; // actual trip start (movement begins after transition)
   endTimeSeconds: number; // actual trip end (movement stops, fade-out begins)
   visibleStartSeconds: number; // when bike first appears (fade-in starts)
@@ -157,7 +157,7 @@ function prepareTripsForDeck(data: {
         id: trip.id,
         path: coordinates,
         timestamps,
-        vendor: trip.rideableType === "electric_bike" ? 1 : 0,
+        bikeType: trip.rideableType,
         startTimeSeconds: tripStartSeconds,
         endTimeSeconds: tripEndSeconds,
         visibleStartSeconds: tripStartSeconds - FADE_DURATION_SIM_SECONDS - TRANSITION_DURATION_SIM_SECONDS,
@@ -515,14 +515,14 @@ export const BikeMap = () => {
       position: [number, number];
       bearing: number;
       id: string;
-      vendor: number;
+      bikeType: string;
       phase: string;
       phaseProgress: number;
     }[] = [];
     for (const trip of activeTrips) {
       const state = getBikeState(trip, time);
       if (state) {
-        heads.push({ ...state, id: trip.id, vendor: trip.vendor });
+        heads.push({ ...state, id: trip.id, bikeType: trip.bikeType });
       }
     }
     return heads;
@@ -534,7 +534,7 @@ export const BikeMap = () => {
       data: activeTrips,
       getPath: (d) => d.path,
       getTimestamps: (d) => d.timestamps,
-      getColor: (d) => (d.vendor === 0 ? THEME.trailColor0 : THEME.trailColor1),
+      getColor: (d) => (d.bikeType === "electric_bike" ? THEME.trailColor1 : THEME.trailColor0),
       opacity: 0.3,
       widthMinPixels: 3,
       rounded: true,
@@ -551,7 +551,7 @@ export const BikeMap = () => {
       getIcon: () => "arrow",
       getSize: 9,
       getColor: (d) => {
-        const bikeColor = d.vendor === 0 ? THEME.trailColor0 : THEME.trailColor1;
+        const bikeColor = d.bikeType === "electric_bike" ? THEME.trailColor1 : THEME.trailColor0;
         const maxAlpha = 0.8 * 255;
 
         if (d.phase === "fading-in") {
