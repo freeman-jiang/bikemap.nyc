@@ -11,6 +11,7 @@ import { point } from "@turf/helpers";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Map as MapboxMap } from "react-map-gl/mapbox";
+import { usePickerStore } from "@/lib/store";
 
 import type { Color, MapViewState } from "@deck.gl/core";
 import { LinearInterpolator } from "@deck.gl/core";
@@ -500,6 +501,8 @@ export const BikeMap = () => {
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
   const [initialViewState, setInitialViewState] = useState<MapViewState>(INITIAL_VIEW_STATE);
 
+  const { isPickingLocation, setPickedLocation } = usePickerStore();
+
   const rafRef = useRef<number | null>(null);
   const lastTimestampRef = useRef<number | null>(null);
   const fpsRef = useRef<HTMLDivElement>(null);
@@ -810,12 +813,26 @@ export const BikeMap = () => {
     [activeTrips, time, selectedTripId, selectedTripData]
   );
 
+  const handleMapClick = useCallback(
+    (info: { coordinate?: number[] }) => {
+      if (isPickingLocation && info.coordinate && info.coordinate.length >= 2) {
+        setPickedLocation({
+          lng: info.coordinate[0],
+          lat: info.coordinate[1],
+        });
+      }
+    },
+    [isPickingLocation, setPickedLocation]
+  );
+
   return (
     <div className="relative w-full h-full">
       <DeckGL
         layers={layers}
         initialViewState={initialViewState}
         controller={true}
+        onClick={handleMapClick}
+        getCursor={() => (isPickingLocation ? "crosshair" : "grab")}
       >
         <MapboxMap
           mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}

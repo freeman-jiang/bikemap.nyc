@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@bikemap/db";
+import { Prisma, prisma } from "@bikemap/db";
 
 // Default: June 8, 2025 10:00 AM - 12:00 PM (peak commute)
 const DEFAULT_START_TIME = new Date("2025-06-08T10:00:00.000Z");
@@ -178,25 +178,39 @@ export async function getRidesStartingIn(params: {
 }
 
 export async function getStations() {
-  const stations = await prisma.station.findMany({
-    select: {
-      id: true,
-      name: true,
-      latitude: true,
-      longitude: true,
-    },
-  });
+  // Merge duplicate stations by name, aggregating all IDs
+  const stations = await prisma.$queryRaw<
+    Array<{
+      ids: string;
+      name: string;
+      latitude: number;
+      longitude: number;
+    }>
+  >`
+    SELECT
+      GROUP_CONCAT(id) as ids,
+      name,
+      AVG(latitude) as latitude,
+      AVG(longitude) as longitude
+    FROM Station
+    GROUP BY name
+  `;
 
-  return stations;
+  // Convert comma-separated ids string to array
+  return stations.map((s) => ({
+    ...s,
+    ids: s.ids.split(","),
+  }));
 }
 
-// Get trips from a specific station within a time window (datetime ± interval)
+// Get trips from station(s) within a time window (datetime ± interval)
+// Accepts multiple station IDs to handle merged/duplicate stations
 export async function getTripsFromStation(params: {
-  startStationId: string;
+  startStationIds: string[];
   datetime: Date;
   intervalSeconds: number;
 }) {
-  const { startStationId, datetime, intervalSeconds } = params;
+  const { startStationIds, datetime, intervalSeconds } = params;
 
   const windowStart = new Date(datetime.getTime() - intervalSeconds * 1000);
   const windowEnd = new Date(datetime.getTime() + intervalSeconds * 1000);
@@ -238,7 +252,7 @@ export async function getTripsFromStation(params: {
     LEFT JOIN Route r
       ON r.startStationId = t.startStationId
       AND r.endStationId = t.endStationId
-    WHERE t.startStationId = ${startStationId}
+    WHERE t.startStationId IN (${Prisma.join(startStationIds)})
       AND t.startedAt >= ${windowStart}
       AND t.startedAt <= ${windowEnd}
     ORDER BY t.startedAt ASC

@@ -1,11 +1,17 @@
 import { create } from 'zustand'
 
-interface Store {
-  string: string
-  setString: (value: string) => void
+type PickerState = {
+  isPickingLocation: boolean
+  pickedLocation: { lat: number; lng: number } | null
+  startPicking: () => void
+  setPickedLocation: (loc: { lat: number; lng: number }) => void
+  clearPicking: () => void
 }
 
-export const useStore = create<Store>((set) => ({
-  string: '',
-  setString: (value) => set({ string: value }),
+export const usePickerStore = create<PickerState>((set) => ({
+  isPickingLocation: false,
+  pickedLocation: null,
+  startPicking: () => set({ isPickingLocation: true, pickedLocation: null }),
+  setPickedLocation: (loc) => set({ isPickingLocation: false, pickedLocation: loc }),
+  clearPicking: () => set({ isPickingLocation: false, pickedLocation: null }),
 }))
