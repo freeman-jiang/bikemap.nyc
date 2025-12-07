@@ -292,12 +292,12 @@ export function Search() {
                       {formatDateTimeFull(trip.startedAt)}
                     </span>
                   </div>
-                  <div className="ml-auto flex flex-col items-end text-muted-foreground">
-                    <span className="text-xs truncate max-w-[30ch]">
+                  <div className="ml-auto flex flex-col items-end">
+                    <span className="text-zinc-400 font-medium truncate max-w-[30ch]">
                       {getStationName(trip.endStationId, stationMap)}
                     </span>
                     {trip.routeDistance && (
-                      <span className="text-xs">{formatDistance(trip.routeDistance)}</span>
+                      <span className="text-sm text-muted-foreground">{formatDistance(trip.routeDistance)}</span>
                     )}
                   </div>
                 </div>
