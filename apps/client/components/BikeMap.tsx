@@ -22,7 +22,7 @@ import { LinearInterpolator } from "@deck.gl/core";
 type ChunkResponse = Awaited<ReturnType<typeof getTripsForChunk>>;
 type Trip = ChunkResponse["trips"][number];
 
-type AnimationState = "idle" | "playing" | "finished";
+type AnimationState = "idle" | "playing";
 type Phase = "fading-in" | "moving" | "fading-out";
 
 // DeckGL TripsLayer data format
@@ -56,14 +56,12 @@ const TRAIL_LENGTH_SECONDS = 45;
 const EASE_DISTANCE_METERS = 300; // Fixed easing distance at start/end of trips
 
 // Chunking config
-const CHUNK_SIZE_SECONDS = 1 * 60; // 15 minutes in seconds
+const CHUNK_SIZE_SECONDS = 1 * 60; // 1 minute in seconds
 const LOOKAHEAD_CHUNKS = 1;
 
 const THEME = {
   trailColor0: [187, 154, 247] as Color, // purple
   trailColor1: [125, 207, 255] as Color, // sky blue
-  fadeInColor: [115, 255, 140] as Color, // vibrant mint green
-  fadeOutColor: [247, 118, 142] as Color, // pink
   selectedColor: [255, 165, 0] as Color, // orange
 };
 
@@ -483,7 +481,6 @@ export const BikeMap = () => {
   const storePlay = useAnimationStore((s) => s.play);
   const advanceTime = useAnimationStore((s) => s.advanceTime);
   const setCurrentTime = useAnimationStore((s) => s.setCurrentTime);
-  const resetPlayback = useAnimationStore((s) => s.resetPlayback);
   const selectedTripId = useAnimationStore((s) => s.selectedTripId);
   const selectTrip = useAnimationStore((s) => s.selectTrip);
 
@@ -654,57 +651,6 @@ export const BikeMap = () => {
 
     rafRef.current = requestAnimationFrame(tick);
   }, [speedup, advanceTime, setCurrentTime, storePlay]);
-
-  const replay = useCallback(() => {
-    // Stop current animation
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
-    }
-    lastTimestampRef.current = null;
-    resetPlayback();
-
-    // Reset state
-    tripMapRef.current.clear();
-    loadingChunksRef.current.clear();
-    loadedChunksRef.current.clear();
-    initialLoadDone.current = false;
-    lastChunkRef.current = -1;
-    setActiveTrips([]);
-    setTripCount(0);
-
-    // Reload initial data
-    const loadInitial = async () => {
-      const data = await getTripsForChunk({
-        chunkStart: animationStartDate,
-        chunkEnd: new Date(windowStartMs + CHUNK_SIZE_SECONDS * 1000),
-      });
-      const prepared = prepareTripsForDeck({
-        trips: data.trips,
-        windowStartMs,
-        fadeDurationSimSeconds,
-      });
-
-      for (const trip of prepared) {
-        tripMapRef.current.set(trip.id, trip);
-      }
-      loadedChunksRef.current.add(0);
-
-      // Load lookahead chunks in parallel
-      const lookaheadPromises = [];
-      for (let i = 1; i <= LOOKAHEAD_CHUNKS + 1; i++) {
-        lookaheadPromises.push(loadUpcomingRides(i));
-      }
-      await Promise.all(lookaheadPromises);
-
-      setActiveTrips(Array.from(tripMapRef.current.values()));
-      setTripCount(tripMapRef.current.size);
-
-      // Start animation
-      play();
-    };
-
-    loadInitial();
-  }, [windowStartMs, loadUpcomingRides, play, animationStartDate, fadeDurationSimSeconds, resetPlayback]);
 
   // Reset and reload when config changes (track source values directly)
   const configRef = useRef({ windowStartMs, speedup });
@@ -960,14 +906,6 @@ export const BikeMap = () => {
               Random Biker
             </button>
           </>
-        )}
-        {animState === "finished" && (
-          <button
-            onClick={replay}
-            className="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-lg shadow-lg transition-colors"
-          >
-            Replay
-          </button>
         )}
       </div>
     </div>
