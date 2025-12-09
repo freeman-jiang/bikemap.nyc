@@ -3,7 +3,12 @@
 import polyline from "@mapbox/polyline";
 import distance from "@turf/distance";
 import { point } from "@turf/helpers";
-import type { DeckTrip, Phase, RawTrip } from "../lib/trip-types";
+import {
+  BATCH_SIZE_SECONDS,
+  CHUNK_SIZE_SECONDS,
+  EASE_DISTANCE_METERS,
+  TRAIL_LENGTH_SECONDS,
+} from "../lib/chunk-config";
 import type {
   ClearBatchMessage,
   InitMessage,
@@ -13,11 +18,7 @@ import type {
   UpdateConfigMessage,
   WorkerToMainMessage,
 } from "../lib/trip-processor-protocol";
-
-// === Configuration ===
-const CHUNK_SIZE_SECONDS = 60; // 1 minute chunks
-const TRAIL_LENGTH_SECONDS = 45;
-const EASE_DISTANCE_METERS = 300;
+import type { DeckTrip, Phase, RawTrip } from "../lib/trip-types";
 
 // === Worker State ===
 let windowStartMs = 0;

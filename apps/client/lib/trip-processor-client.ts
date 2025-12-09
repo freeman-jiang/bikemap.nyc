@@ -1,11 +1,9 @@
-import type { DeckTrip, RawTrip } from "./trip-types";
+import { CHUNKS_PER_BATCH } from "./chunk-config";
 import type {
   MainToWorkerMessage,
   WorkerToMainMessage,
 } from "./trip-processor-protocol";
-
-const BATCH_SIZE_SECONDS = 60 * 60; // 1 hour
-const CHUNKS_PER_BATCH = 60;
+import type { DeckTrip, RawTrip } from "./trip-types";
 
 export class TripProcessorClient {
   private worker: Worker | null = null;

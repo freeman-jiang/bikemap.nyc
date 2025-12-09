@@ -2,6 +2,13 @@
 
 import { getRidesStartingIn as getRidesInWindow, getTripsForChunk } from "@/app/server/trips";
 import { useAnimationStore } from "@/lib/animation-store";
+import {
+  BATCH_SIZE_SECONDS,
+  CHUNK_SIZE_SECONDS,
+  CHUNKS_PER_BATCH,
+  PREFETCH_THRESHOLD_CHUNKS,
+  TRAIL_LENGTH_SECONDS,
+} from "@/lib/chunk-config";
 import { usePickerStore } from "@/lib/store";
 import { TripProcessorClient } from "@/lib/trip-processor-client";
 import type { DeckTrip, Phase, RawTrip } from "@/lib/trip-types";
@@ -17,15 +24,6 @@ import type { Color, MapViewState } from "@deck.gl/core";
 import { LinearInterpolator } from "@deck.gl/core";
 
 type AnimationState = "idle" | "playing";
-
-// Animation config - all times in seconds
-const TRAIL_LENGTH_SECONDS = 45;
-
-// Chunking config
-const CHUNK_SIZE_SECONDS = 60; // 1 minute in seconds
-const BATCH_SIZE_SECONDS = 60 * 60; // 1 hour in seconds
-const CHUNKS_PER_BATCH = BATCH_SIZE_SECONDS / CHUNK_SIZE_SECONDS; // 60 chunks per batch
-const PREFETCH_THRESHOLD_CHUNKS = 50; // Prefetch next batch when 10 chunks from batch end
 
 const THEME = {
   trailColor0: [187, 154, 247] as Color, // purple
