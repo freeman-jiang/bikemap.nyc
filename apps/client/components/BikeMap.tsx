@@ -1,6 +1,6 @@
 "use client";
 
-import { useAnimationStore } from "@/lib/animation-store";
+import { useAnimationStore } from "@/lib/stores/animation-store";
 import {
   CHUNK_SIZE_SECONDS,
   CHUNKS_PER_BATCH,
@@ -11,7 +11,7 @@ import {
   TRAIL_LENGTH_SECONDS,
 } from "@/lib/config";
 import { formatTime } from "@/lib/format";
-import { usePickerStore } from "@/lib/store";
+import { usePickerStore } from "@/lib/stores/location-picker-store";
 import type { Phase, ProcessedTrip } from "@/lib/trip-types";
 import { TripDataService } from "@/services/trip-data-service";
 import { DataFilterExtension } from "@deck.gl/extensions";

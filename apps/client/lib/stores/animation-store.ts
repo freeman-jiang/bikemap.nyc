@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import { DEFAULT_ANIMATION_START_DATE, DEFAULT_SPEEDUP } from "./config"
+import { DEFAULT_ANIMATION_START_DATE, DEFAULT_SPEEDUP } from "../config"
 
 type AnimationStore = {
   // Source config only
