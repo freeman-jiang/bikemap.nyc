@@ -1,21 +1,20 @@
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import { point } from "@turf/helpers";
-import { wktToGeoJSON } from "betterknown";
 import { Database } from "bun:sqlite";
-import { parse } from "csv-parse/sync";
-import type { MultiPolygon, Polygon } from "geojson";
-import path from "path";
+import type { Feature, FeatureCollection, Polygon } from "geojson";
+import path from "node:path";
 
 type StationRegion = {
   region: string;
   neighborhood: string;
 };
 
-type NTARecord = {
-  BoroName: string;
-  NTAName: string;
-  the_geom: string;
+type NeighborhoodProperties = {
+  neighborhood: string;
+  borough: string;
 };
+
+type NeighborhoodFeature = Feature<Polygon, NeighborhoodProperties>;
 
 type Station = {
   id: string;
@@ -23,20 +22,6 @@ type Station = {
   latitude: number;
   longitude: number;
 };
-
-// Parse NTA CSV and build lookup structure
-function loadNTAs(csvPath: string): Array<NTARecord & { geometry: Polygon | MultiPolygon }> {
-  const fileContent = Bun.file(csvPath).text();
-  const records = parse(fileContent, { columns: true }) as NTARecord[];
-
-  return records.map((record) => {
-    const geometry = wktToGeoJSON(record.the_geom) as Polygon | MultiPolygon;
-    return {
-      ...record,
-      geometry,
-    };
-  });
-}
 
 // Get region for NJ stations (simple bounding box)
 function getNJRegion(data: { lat: number; lng: number }): StationRegion | null {
@@ -57,16 +42,16 @@ function getNJRegion(data: { lat: number; lng: number }): StationRegion | null {
 function getNYCRegion(data: {
   lat: number;
   lng: number;
-  ntas: Array<NTARecord & { geometry: Polygon | MultiPolygon }>;
+  neighborhoods: NeighborhoodFeature[];
 }): StationRegion | null {
-  const { lat, lng, ntas } = data;
+  const { lat, lng, neighborhoods } = data;
   const stationPoint = point([lng, lat]);
 
-  for (const nta of ntas) {
-    if (booleanPointInPolygon(stationPoint, nta.geometry)) {
+  for (const feature of neighborhoods) {
+    if (booleanPointInPolygon(stationPoint, feature.geometry)) {
       return {
-        region: nta.BoroName,
-        neighborhood: nta.NTAName,
+        region: feature.properties.borough,
+        neighborhood: feature.properties.neighborhood,
       };
     }
   }
@@ -78,14 +63,18 @@ function getNYCRegion(data: {
 function getStationRegion(data: {
   lat: number;
   lng: number;
-  ntas: Array<NTARecord & { geometry: Polygon | MultiPolygon }>;
+  neighborhoods: NeighborhoodFeature[];
 }): StationRegion {
   // Try NJ first (fast bounding box check)
   const njRegion = getNJRegion({ lat: data.lat, lng: data.lng });
   if (njRegion) return njRegion;
 
   // Try NYC (point-in-polygon)
-  const nycRegion = getNYCRegion(data);
+  const nycRegion = getNYCRegion({
+    lat: data.lat,
+    lng: data.lng,
+    neighborhoods: data.neighborhoods,
+  });
   if (nycRegion) return nycRegion;
 
   // Fallback
@@ -94,19 +83,20 @@ function getStationRegion(data: {
 
 async function main() {
   const dataDir = path.join(process.cwd(), "../../data");
-  const ntaCsvPath = path.join(dataDir, "2020_Neighborhood_Tabulation_Areas_(NTAs)_20251207.csv");
-  const outputPath = path.join(dataDir, "station-regions.json");
+  const geoJsonPath = path.join(
+    dataDir,
+    "d085e2f8d0b54d4590b1e7d1f35594c1pediacitiesnycneighborhoods.geojson"
+  );
+  const outputPath = path.join(process.cwd(), "../../apps/client/public/station-regions.json");
   const dbPath = path.join(import.meta.dir, "../db/mydb.db");
 
-  console.log("Loading NTA boundaries...");
-  const ntaContent = await Bun.file(ntaCsvPath).text();
-  const ntaRecords = parse(ntaContent, { columns: true }) as NTARecord[];
-
-  console.log(`Parsing ${ntaRecords.length} NTA polygons...`);
-  const ntas = ntaRecords.map((record) => {
-    const geometry = wktToGeoJSON(record.the_geom) as Polygon | MultiPolygon;
-    return { ...record, geometry };
-  });
+  console.log("Loading neighborhood boundaries...");
+  const geoData = (await Bun.file(geoJsonPath).json()) as FeatureCollection<
+    Polygon,
+    NeighborhoodProperties
+  >;
+  const neighborhoods = geoData.features;
+  console.log(`Loaded ${neighborhoods.length} neighborhood polygons`);
 
   console.log("Loading stations from database...");
   const db = new Database(dbPath, { readonly: true });
@@ -122,7 +112,7 @@ async function main() {
     const region = getStationRegion({
       lat: station.latitude,
       lng: station.longitude,
-      ntas,
+      neighborhoods,
     });
 
     results[station.id] = region;
