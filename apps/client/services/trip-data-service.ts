@@ -37,7 +37,10 @@ export class TripDataService {
   >();
   private loadedBatches = new Set<number>();
   private loadingBatches = new Set<number>();
-  private batchProcessedCallbacks = new Map<number, (() => void)[]>();
+  private batchProcessedCallbacks = new Map<
+    number,
+    { resolve: () => void; reject: (error: unknown) => void }[]
+  >();
 
   constructor(config: TripDataServiceConfig) {
     this.config = config;
@@ -195,8 +198,8 @@ export class TripDataService {
         // Resolve ALL waiting callbacks (supports concurrent waiters)
         const callbacks = this.batchProcessedCallbacks.get(msg.batchId);
         if (callbacks) {
-          for (const callback of callbacks) {
-            callback();
+          for (const { resolve } of callbacks) {
+            resolve();
           }
           this.batchProcessedCallbacks.delete(msg.batchId);
         }
@@ -230,9 +233,9 @@ export class TripDataService {
 
     // If already loading, add to waiters and return promise
     if (this.loadingBatches.has(batchId)) {
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         const callbacks = this.batchProcessedCallbacks.get(batchId) ?? [];
-        callbacks.push(resolve);
+        callbacks.push({ resolve, reject });
         this.batchProcessedCallbacks.set(batchId, callbacks);
       });
     }
@@ -252,14 +255,24 @@ export class TripDataService {
       });
 
       // Wait for batch to be processed
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         const callbacks = this.batchProcessedCallbacks.get(batchId) ?? [];
-        callbacks.push(resolve);
+        callbacks.push({ resolve, reject });
         this.batchProcessedCallbacks.set(batchId, callbacks);
       });
     } catch (error) {
       console.error(`Failed to load batch ${batchId}:`, error);
       this.loadingBatches.delete(batchId);
+
+      // Reject all waiting callbacks
+      const callbacks = this.batchProcessedCallbacks.get(batchId);
+      if (callbacks) {
+        for (const { reject } of callbacks) {
+          reject(error);
+        }
+        this.batchProcessedCallbacks.delete(batchId);
+      }
+
       throw error;
     }
   }
