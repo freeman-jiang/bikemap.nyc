@@ -1,9 +1,27 @@
 // Shared types for trip processing between main thread and worker
 
+import type { Trip } from "@bikemap/db";
+
+// ============================================================================
+// Trip Types (derived from Prisma)
+// ============================================================================
+
+// Trip + Route join (what the SQL query returns)
+// Route type is defined inline since Prisma doesn't generate it (composite key)
+export type TripWithRoute = Trip & {
+  routeGeometry: string | null;
+  routeDistance: number | null;
+  routeDuration: number | null;
+};
+
+// ============================================================================
+// Processed Trip (for deck.gl rendering)
+// ============================================================================
+
 export type Phase = "fading-in" | "moving" | "fading-out";
 
-// DeckGL TripsLayer data format
-export type DeckTrip = {
+// Transformed trip data for deck.gl TripsLayer
+export type ProcessedTrip = {
   id: string;
   path: [number, number][];
   timestamps: number[]; // seconds from window start
@@ -28,27 +46,70 @@ export type DeckTrip = {
   isSelected: boolean;
 };
 
-// Raw trip from server (serializable for worker transfer)
-// Dates become ISO strings when sent via postMessage
-export type RawTrip = {
-  id: string;
-  startStationId: string;
-  endStationId: string;
-  startedAt: string; // ISO string
-  endedAt: string; // ISO string
-  rideableType: string;
-  memberCasual: string;
-  startLat: number;
-  startLng: number;
-  endLat: number | null;
-  endLng: number | null;
-  routeGeometry: string | null;
-  routeDistance: number | null;
-  routeDuration: number | null;
+// ============================================================================
+// Worker Messages
+// ============================================================================
+
+// Main Thread -> Worker
+export type InitMessage = {
+  type: "init";
+  windowStartMs: number;
+  fadeDurationSimSeconds: number;
 };
 
-// Trip type with Date objects (from server before serialization)
-export type ServerTrip = Omit<RawTrip, "startedAt" | "endedAt"> & {
-  startedAt: Date;
-  endedAt: Date;
+export type LoadBatchMessage = {
+  type: "load-batch";
+  batchId: number;
+  trips: TripWithRoute[];
 };
+
+export type RequestChunkMessage = {
+  type: "request-chunk";
+  chunkIndex: number;
+};
+
+export type ClearBatchMessage = {
+  type: "clear-batch";
+  batchId: number;
+};
+
+export type MainToWorkerMessage =
+  | InitMessage
+  | LoadBatchMessage
+  | RequestChunkMessage
+  | ClearBatchMessage;
+
+// Worker -> Main Thread
+export type ReadyMessage = {
+  type: "ready";
+};
+
+export type BatchProcessedMessage = {
+  type: "batch-processed";
+  batchId: number;
+  tripCount: number;
+};
+
+export type ChunkResponseMessage = {
+  type: "chunk-response";
+  chunkIndex: number;
+  trips: ProcessedTrip[];
+};
+
+export type RequestBatchMessage = {
+  type: "request-batch";
+  batchId: number;
+};
+
+export type ErrorMessage = {
+  type: "error";
+  message: string;
+  context?: string;
+};
+
+export type WorkerToMainMessage =
+  | ReadyMessage
+  | BatchProcessedMessage
+  | ChunkResponseMessage
+  | RequestBatchMessage
+  | ErrorMessage;

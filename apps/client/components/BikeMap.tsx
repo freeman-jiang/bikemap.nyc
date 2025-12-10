@@ -8,7 +8,7 @@ import {
   TRAIL_LENGTH_SECONDS,
 } from "@/lib/chunk-config";
 import { usePickerStore } from "@/lib/store";
-import type { DeckTrip, Phase } from "@/lib/trip-types";
+import type { Phase, ProcessedTrip } from "@/lib/trip-types";
 import { TripDataService } from "@/services/trip-data-service";
 import { DataFilterExtension } from "@deck.gl/extensions";
 import { TripsLayer } from "@deck.gl/geo-layers";
@@ -47,9 +47,9 @@ const INITIAL_VIEW_STATE: MapViewState = {
 };
 
 // Layer accessor functions (extracted to avoid recreation on each render)
-const getPath = (d: DeckTrip) => d.path;
-const getTimestamps = (d: DeckTrip) => d.timestamps;
-const getTripColor = (d: DeckTrip) =>
+const getPath = (d: ProcessedTrip) => d.path;
+const getTimestamps = (d: ProcessedTrip) => d.timestamps;
+const getTripColor = (d: ProcessedTrip) =>
   d.isSelected
     ? THEME.selectedColor
     : d.bikeType === "electric_bike"
@@ -103,17 +103,17 @@ const COLORS = {
 const colorScratch: Color4 = [0, 0, 0, 0];
 const MAX_ALPHA = 0.8 * 255;
 
-// IconLayer accessors - now use DeckTrip directly (no intermediate BikeHead objects)
-const getBikeHeadPosition = (d: DeckTrip, { target }: { target: number[] }): [number, number, number] => {
+// IconLayer accessors - now use ProcessedTrip directly (no intermediate BikeHead objects)
+const getBikeHeadPosition = (d: ProcessedTrip, { target }: { target: number[] }): [number, number, number] => {
   target[0] = d.currentPosition[0];
   target[1] = d.currentPosition[1];
   target[2] = 0;
   return target as [number, number, number];
 };
-const getBikeHeadAngle = (d: DeckTrip) => -d.currentBearing;
+const getBikeHeadAngle = (d: ProcessedTrip) => -d.currentBearing;
 const getBikeHeadIcon = () => "arrow";
 const getBikeHeadSize = () => 9;
-const getBikeHeadColor = (d: DeckTrip): Color4 => {
+const getBikeHeadColor = (d: ProcessedTrip): Color4 => {
   // Selected trips are always orange (still respect alpha for fading)
   if (d.isSelected) {
     const alpha =
@@ -147,7 +147,7 @@ const ICON_MAPPING = {
 const dataFilter = new DataFilterExtension({ filterSize: 2 });
 
 // Accessor for DataFilterExtension - returns [visibleStartSeconds, visibleEndSeconds]
-const getFilterValue = (d: DeckTrip): [number, number] => [d.visibleStartSeconds, d.visibleEndSeconds];
+const getFilterValue = (d: ProcessedTrip): [number, number] => [d.visibleStartSeconds, d.visibleEndSeconds];
 
 // Format milliseconds timestamp to date + 12-hour time string (NYC timezone)
 const formatTime = (ms: number) =>
@@ -172,7 +172,7 @@ function interpolateAngle(from: number, to: number, factor: number): number {
 
 // Update trip's mutable state in place. Returns true if visible.
 function updateTripState(
-  trip: DeckTrip,
+  trip: ProcessedTrip,
   currentTime: number,
   fadeDurationSimSeconds: number
 ): boolean {
@@ -315,7 +315,7 @@ export const BikeMap = () => {
   const windowStartMs = animationStartDate.getTime();
   const fadeDurationSimSeconds = (FADE_DURATION_MS / 1000) * speedup;
 
-  const [activeTrips, setActiveTrips] = useState<DeckTrip[]>([]);
+  const [activeTrips, setActiveTrips] = useState<ProcessedTrip[]>([]);
   const [tripCount, setTripCount] = useState(0);
   const [animState, setAnimState] = useState<AnimationState>("idle");
   const [initialViewState, setInitialViewState] = useState<MapViewState>(INITIAL_VIEW_STATE);
@@ -327,7 +327,7 @@ export const BikeMap = () => {
   const fpsRef = useRef<HTMLDivElement>(null);
   const smoothedFpsRef = useRef(60);
   const lastFpsUpdateRef = useRef(0);
-  const tripMapRef = useRef<Map<string, DeckTrip>>(new Map());
+  const tripMapRef = useRef<Map<string, ProcessedTrip>>(new Map());
   const loadingChunksRef = useRef<Set<number>>(new Set());
   const loadedChunksRef = useRef<Set<number>>(new Set());
   const lastChunkRef = useRef(-1);
@@ -620,7 +620,7 @@ export const BikeMap = () => {
       // Selected biker's full route (rendered underneath trails, only when selected)
       ...(selectedTripData.length > 0
         ? [
-            new PathLayer<DeckTrip>({
+            new PathLayer<ProcessedTrip>({
               id: "selected-route",
               data: selectedTripData,
               getPath: (d) => d.path,
@@ -632,7 +632,7 @@ export const BikeMap = () => {
             }),
           ]
         : []),
-      new TripsLayer<DeckTrip>({
+      new TripsLayer<ProcessedTrip>({
         id: "trips",
         data: activeTrips,
         getPath,
@@ -667,7 +667,7 @@ export const BikeMap = () => {
         getFilterValue,
         filterRange: [[-Infinity, time], [time, Infinity]],
         // updateTriggers required - deck.gl caches accessor results and won't
-        // re-read mutated DeckTrip properties without this signal
+        // re-read mutated ProcessedTrip properties without this signal
         updateTriggers: {
           getPosition: [time],
           getAngle: [time],

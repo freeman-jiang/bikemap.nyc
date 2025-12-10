@@ -9,24 +9,26 @@ import {
   EASE_DISTANCE_METERS,
   TRAIL_LENGTH_SECONDS,
 } from "../lib/chunk-config";
+import { filterTrips } from "../lib/trip-filters";
 import type {
   ClearBatchMessage,
   InitMessage,
   LoadBatchMessage,
   MainToWorkerMessage,
+  Phase,
+  ProcessedTrip,
   RequestChunkMessage,
+  TripWithRoute,
   WorkerToMainMessage,
-} from "../lib/trip-processor-protocol";
-import { filterTrips } from "../lib/trip-filters";
-import type { DeckTrip, Phase, RawTrip } from "../lib/trip-types";
+} from "../lib/trip-types";
 
 // === Worker State ===
 let windowStartMs = 0;
 let fadeDurationSimSeconds = 0;
 let initialized = false;
 
-// Chunk index -> DeckTrip[]
-const chunkMap = new Map<number, DeckTrip[]>();
+// Chunk index -> ProcessedTrip[]
+const chunkMap = new Map<number, ProcessedTrip[]>();
 
 // Track which batches are processed
 const processedBatches = new Set<number>();
@@ -66,14 +68,14 @@ function getTimeFraction(dist: number, totalDist: number): number {
 
 // === Prepare Trips for DeckGL ===
 function prepareTripsForDeck(data: {
-  trips: RawTrip[];
+  trips: TripWithRoute[];
   windowStartMs: number;
   fadeDurationSimSeconds: number;
-}): DeckTrip[] {
+}): ProcessedTrip[] {
   const { trips, windowStartMs: winStart, fadeDurationSimSeconds: fadeDur } = data;
 
   // Filter trips
-  const validTrips = filterTrips(trips) as (RawTrip & {
+  const validTrips = filterTrips(trips) as (TripWithRoute & {
     routeGeometry: string;
   })[];
 
@@ -101,8 +103,8 @@ function prepareTripsForDeck(data: {
       const totalDistance = cumulativeDistances[cumulativeDistances.length - 1];
 
       // Convert to seconds from window start
-      const tripStartMs = new Date(trip.startedAt).getTime();
-      const tripEndMs = new Date(trip.endedAt).getTime();
+      const tripStartMs = trip.startedAt.getTime();
+      const tripEndMs = trip.endedAt.getTime();
       const tripStartSeconds = (tripStartMs - winStart) / 1000;
       const tripEndSeconds = (tripEndMs - winStart) / 1000;
       const tripDurationSeconds = tripEndSeconds - tripStartSeconds;
@@ -175,7 +177,7 @@ function prepareTripsForDeck(data: {
         isSelected: false,
       };
     })
-    .filter((trip): trip is DeckTrip => trip !== null);
+    .filter((trip): trip is ProcessedTrip => trip !== null);
 
   return prepared;
 }
