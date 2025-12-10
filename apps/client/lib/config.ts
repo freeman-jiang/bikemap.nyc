@@ -29,3 +29,33 @@ export const PREFETCH_THRESHOLD_CHUNKS = Math.floor(CHUNKS_PER_BATCH * 0.8);
 
 export const TRAIL_LENGTH_SECONDS = 45;
 export const EASE_DISTANCE_METERS = 300;
+
+// Fade duration in real-time milliseconds
+export const FADE_DURATION_MS = 700;
+
+// =============================================================================
+// Map Configuration
+// =============================================================================
+
+export const INITIAL_VIEW_STATE = {
+  longitude: -73.9903, // Manhattan Bridge center
+  latitude: 40.7074,
+  zoom: 13,
+  pitch: 0, // Bird's eye view (straight down)
+  bearing: 0,
+};
+
+// =============================================================================
+// Colors (RGB tuples)
+// =============================================================================
+
+export const COLORS = {
+  // Trail colors (TripsLayer)
+  classic: [187, 154, 247] as const, // purple
+  electric: [125, 207, 255] as const, // sky blue
+  selected: [255, 165, 0] as const, // orange
+
+  // Bike head transition colors
+  fadeIn: [115, 255, 140] as const, // green
+  fadeOut: [247, 118, 142] as const, // red/pink
+} as const;

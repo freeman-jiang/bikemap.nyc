@@ -3,6 +3,7 @@ import { getStations, getTripsFromStation } from "@/app/server/trips"
 import { EBike } from "@/components/icons/Ebike"
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command"
 import { useAnimationStore } from "@/lib/animation-store"
+import { formatDateTimeFull, formatDateTime, formatDistance, formatDurationMinutes } from "@/lib/format"
 import { usePickerStore } from "@/lib/store"
 import distance from "@turf/distance"
 import { point } from "@turf/helpers"
@@ -39,45 +40,6 @@ const LOOKBACK_MINUTES = 10
 type StationRegion = {
   region: string
   neighborhood: string
-}
-
-function formatDistance(meters: number): string {
-  if (meters < 1000) {
-    return `${Math.round(meters)}m`
-  }
-  return `${(meters / 1000).toFixed(1)}km`
-}
-
-function formatDateTime(date: Date): string {
-  const currentYear = new Date().getFullYear()
-  const dateYear = date.getFullYear()
-
-  return date.toLocaleString("en-US", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: dateYear !== currentYear ? "numeric" : undefined,
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  })
-}
-
-function formatDurationMinutes(startedAt: Date, endedAt: Date): string {
-  const ms = new Date(endedAt).getTime() - new Date(startedAt).getTime()
-  const minutes = Math.round(ms / 60000)
-  return `${minutes} min${minutes !== 1 ? "s" : ""}`
-}
-
-function formatDateTimeFull(date: Date): string {
-  return new Date(date).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  })
 }
 
 function getStationName(stationId: string, stationMap: Map<string, Station>): string {

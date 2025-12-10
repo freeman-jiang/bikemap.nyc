@@ -1,13 +1,4 @@
-type TripWithRoute = {
-  startStationId: string;
-  endStationId: string;
-  // Date when called from main thread, string (ISO) when called from worker
-  // (postMessage serializes Date objects to strings)
-  startedAt: Date | string;
-  endedAt: Date | string;
-  routeGeometry: string | null;
-  routeDistance: number | null;
-};
+import type { TripWithRoute } from "./trip-types";
 
 /**
  * Filters trips to only include those that can be rendered on the map.
@@ -28,7 +19,7 @@ export function filterTrips<T extends TripWithRoute>(trips: T[]): T[] {
 
     // Speed must be 2-18 km/h
     if (!trip.routeDistance) return false;
-    const durationMs = new Date(trip.endedAt).getTime() - new Date(trip.startedAt).getTime();
+    const durationMs = trip.endedAt.getTime() - trip.startedAt.getTime();
     const durationHours = durationMs / (1000 * 60 * 60);
     const speedKmh = trip.routeDistance / 1000 / durationHours;
     if (speedKmh <= 2 || speedKmh >= 18) return false;

@@ -4,9 +4,13 @@ import { useAnimationStore } from "@/lib/animation-store";
 import {
   CHUNK_SIZE_SECONDS,
   CHUNKS_PER_BATCH,
+  COLORS,
+  FADE_DURATION_MS,
+  INITIAL_VIEW_STATE,
   PREFETCH_THRESHOLD_CHUNKS,
   TRAIL_LENGTH_SECONDS,
 } from "@/lib/config";
+import { formatTime } from "@/lib/format";
 import { usePickerStore } from "@/lib/store";
 import type { Phase, ProcessedTrip } from "@/lib/trip-types";
 import { TripDataService } from "@/services/trip-data-service";
@@ -23,12 +27,6 @@ import { LinearInterpolator } from "@deck.gl/core";
 
 type AnimationState = "idle" | "playing";
 
-const THEME = {
-  trailColor0: [187, 154, 247] as Color, // purple
-  trailColor1: [125, 207, 255] as Color, // sky blue
-  selectedColor: [255, 165, 0] as Color, // orange
-};
-
 // Arrow icon for bike heads
 const ARROW_SVG = `data:image/svg+xml;base64,${btoa(`
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -38,23 +36,15 @@ const ARROW_SVG = `data:image/svg+xml;base64,${btoa(`
 </svg>
 `)}`;
 
-const INITIAL_VIEW_STATE: MapViewState = {
-  longitude: -73.9903, // Manhattan Bridge center
-  latitude: 40.7074,
-  zoom: 13,
-  pitch: 0, // Bird's eye view (straight down)
-  bearing: 0,
-};
-
 // Layer accessor functions (extracted to avoid recreation on each render)
 const getPath = (d: ProcessedTrip) => d.path;
 const getTimestamps = (d: ProcessedTrip) => d.timestamps;
-const getTripColor = (d: ProcessedTrip) =>
+const getTripColor = (d: ProcessedTrip): Color =>
   d.isSelected
-    ? THEME.selectedColor
+    ? (COLORS.selected as unknown as Color)
     : d.bikeType === "electric_bike"
-      ? THEME.trailColor1
-      : THEME.trailColor0;
+      ? (COLORS.electric as unknown as Color)
+      : (COLORS.classic as unknown as Color);
 
 // =============================================================================
 // Color utilities (gl-matrix style)
@@ -89,15 +79,6 @@ const color4 = {
     return out;
   },
 };
-
-// Source colors (immutable)
-const COLORS = {
-  fadeIn: [115, 255, 140] as const,
-  fadeOut: [247, 118, 142] as const,
-  electric: [125, 207, 255] as const,
-  classic: [187, 154, 247] as const,
-  selected: [255, 165, 0] as const,
-} as const
 
 // Single output buffer (mutated and reused each call)
 const colorScratch: Color4 = [0, 0, 0, 0];
@@ -148,17 +129,6 @@ const dataFilter = new DataFilterExtension({ filterSize: 2 });
 
 // Accessor for DataFilterExtension - returns [visibleStartSeconds, visibleEndSeconds]
 const getFilterValue = (d: ProcessedTrip): [number, number] => [d.visibleStartSeconds, d.visibleEndSeconds];
-
-// Format milliseconds timestamp to date + 12-hour time string (NYC timezone)
-const formatTime = (ms: number) =>
-  new Date(ms).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: "America/New_York",
-  });
 
 // Interpolate between two angles, handling 360°/0° wrapping
 function interpolateAngle(from: number, to: number, factor: number): number {
@@ -293,9 +263,6 @@ function updateTripState(
 
   return true;
 }
-
-// Fade duration in real-time milliseconds
-const FADE_DURATION_MS = 700;
 
 // Cached interpolator for camera follow (avoid allocating new object every frame)
 const cameraInterpolator = new LinearInterpolator(["longitude", "latitude"]);
@@ -624,7 +591,7 @@ export const BikeMap = () => {
               id: "selected-route",
               data: selectedTripData,
               getPath: (d) => d.path,
-              getColor: THEME.selectedColor,
+              getColor: COLORS.selected as unknown as Color,
               getWidth: 4,
               widthMinPixels: 2,
               opacity: 0.4,
