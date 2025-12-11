@@ -20,7 +20,7 @@ import { IconLayer, PathLayer } from "@deck.gl/layers";
 import { DeckGL } from "@deck.gl/react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Map as MapboxMap } from "react-map-gl/mapbox";
+import { Map as MapboxMap, Marker } from "react-map-gl/mapbox";
 
 import type { Color, MapViewState } from "@deck.gl/core";
 import { LinearInterpolator } from "@deck.gl/core";
@@ -262,7 +262,7 @@ export const BikeMap = () => {
   const [animState, setAnimState] = useState<AnimationState>("idle");
   const [initialViewState, setInitialViewState] = useState<MapViewState>(INITIAL_VIEW_STATE);
 
-  const { isPickingLocation, setPickedLocation } = usePickerStore();
+  const { isPickingLocation, setPickedLocation, pickedLocation } = usePickerStore();
 
   const rafRef = useRef<number | null>(null);
   const lastTimestampRef = useRef<number | null>(null);
@@ -645,7 +645,17 @@ export const BikeMap = () => {
           mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
           mapStyle="mapbox://styles/mapbox/dark-v11"
           reuseMaps
-        />
+        >
+          {pickedLocation && (
+            <Marker longitude={pickedLocation.lng} latitude={pickedLocation.lat} anchor="center">
+              <span className="relative flex h-[6px] w-[6px] mt-1.5">
+                <span className="animate-ping [animation-duration-[1.5s] absolute inline-flex h-full w-full rounded-full bg-sky-400/70 blur-[0.5px] shadow-[0_0_9px_3px_rgba(125,207,255,0.9)]"></span>
+                <span className="absolute inline-flex h-full w-full rounded-full border border-sky-400/80 shadow-[0_0_4px_rgba(125,207,255,0.9)]"></span>
+                <span className="relative inline-flex h-[6px] w-[6px] rounded-full bg-sky-300 shadow-[0_0_7px_2px_rgba(125,207,255,1)]"></span>
+              </span>
+            </Marker>
+          )}
+        </MapboxMap>
       </DeckGL>
 
       {/* Clock display - top center */}
