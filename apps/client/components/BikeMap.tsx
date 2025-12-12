@@ -5,14 +5,16 @@ import {
   CHUNKS_PER_BATCH,
   COLORS,
   FADE_DURATION_MS,
+  GRAPH_WINDOW_SIZE_SECONDS,
   INITIAL_VIEW_STATE,
   PREFETCH_THRESHOLD_CHUNKS,
   TRAIL_LENGTH_SECONDS,
 } from "@/lib/config";
 import { formatTime } from "@/lib/format";
+import { createThrottledSampler } from "@/lib/misc";
 import { useAnimationStore } from "@/lib/stores/animation-store";
 import { usePickerStore } from "@/lib/stores/location-picker-store";
-import type { Phase, ProcessedTrip } from "@/lib/trip-types";
+import type { GraphDataPoint, Phase, ProcessedTrip } from "@/lib/trip-types";
 import { TripDataService } from "@/services/trip-data-service";
 import { DataFilterExtension } from "@deck.gl/extensions";
 import { TripsLayer } from "@deck.gl/geo-layers";
@@ -21,6 +23,7 @@ import { DeckGL } from "@deck.gl/react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Map as MapboxMap, Marker } from "react-map-gl/mapbox";
+import ActiveBikesGraph from "./ActiveBikesGraph";
 
 import type { Color, MapViewState } from "@deck.gl/core";
 import { LinearInterpolator } from "@deck.gl/core";
@@ -261,6 +264,7 @@ export const BikeMap = () => {
   const [tripCount, setTripCount] = useState(0);
   const [animState, setAnimState] = useState<AnimationState>("idle");
   const [initialViewState, setInitialViewState] = useState<MapViewState>(INITIAL_VIEW_STATE);
+  const [graphData, setGraphData] = useState<GraphDataPoint[]>([]);
 
   const { isPickingLocation, setPickedLocation, pickedLocation } = usePickerStore();
 
@@ -275,6 +279,7 @@ export const BikeMap = () => {
   const lastChunkRef = useRef(-1);
   const lastBatchRef = useRef(-1);
   const serviceRef = useRef<TripDataService | null>(null);
+  const graphSamplerRef = useRef(createThrottledSampler({ intervalMs: 60 }));
 
   // Convert seconds to real time (ms) for clock display
   const secondsToRealTime = useCallback(
@@ -409,6 +414,8 @@ export const BikeMap = () => {
     storePlay();
     lastChunkRef.current = 0;
     lastTimestampRef.current = null;
+    graphSamplerRef.current.reset();
+    setGraphData([]);
 
     const tick = (timestamp: number) => {
       if (lastTimestampRef.current !== null) {
@@ -421,6 +428,18 @@ export const BikeMap = () => {
           fpsRef.current.textContent = `${Math.round(smoothedFpsRef.current)} FPS`;
           lastFpsUpdateRef.current = timestamp;
         }
+
+        // Sample graph data at intervals
+        graphSamplerRef.current.sample(() => {
+          const currentSimTime = useAnimationStore.getState().currentTime;
+          const count = tripMapRef.current.size;
+          setGraphData((prev) => {
+            const newPoint = { time: currentSimTime, count };
+            const updated = [...prev, newPoint];
+            // Keep only points within rolling window
+            return updated.filter((p) => currentSimTime - p.time <= GRAPH_WINDOW_SIZE_SECONDS);
+          });
+        });
       }
       lastTimestampRef.current = timestamp;
       rafRef.current = requestAnimationFrame(tick);
@@ -452,9 +471,11 @@ export const BikeMap = () => {
     loadedChunksRef.current.clear();
     lastChunkRef.current = -1;
     lastBatchRef.current = -1;
+    graphSamplerRef.current.reset();
     setActiveTrips([]);
     setTripCount(0);
     setAnimState("idle");
+    setGraphData([]);
 
     // Recreate service with new config
     const recreateService = async () => {
@@ -698,6 +719,9 @@ export const BikeMap = () => {
             <div className="text-[10px] uppercase tracking-widest text-white/60">Active Trips</div>
             <div className="mt-0.5 text-xl font-semibold tabular-nums">{tripCount.toLocaleString()}</div>
             <div ref={fpsRef} className="mt-0.5 text-[10px] tracking-wide text-white/50">-- FPS</div>
+            <div className="mt-2">
+              <ActiveBikesGraph data={graphData} currentTime={time} />
+            </div>
           </div>
         </div>
       </div>

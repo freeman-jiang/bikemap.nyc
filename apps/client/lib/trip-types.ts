@@ -3,6 +3,15 @@
 import type { Trip } from "@bikemap/db";
 
 // ============================================================================
+// Graph Types
+// ============================================================================
+
+export type GraphDataPoint = {
+  time: number; // Simulation seconds from window start
+  count: number; // Active trip count at this time
+};
+
+// ============================================================================
 // Trip Types (derived from Prisma)
 // ============================================================================
 

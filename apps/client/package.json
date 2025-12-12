@@ -32,6 +32,7 @@
     "lucide-react": "^0.556.0",
     "mapbox-gl": "^3.16.0",
     "maplibre-gl": "^5.13.0",
+    "motion": "^12.23.26",
     "next": "16.0.6",
     "popmotion": "^11.0.5",
     "react": "19.2.0",
