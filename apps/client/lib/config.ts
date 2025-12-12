@@ -18,7 +18,7 @@ export const DEFAULT_SPEEDUP = 150;
 export const CHUNK_SIZE_SECONDS = 60;
 
 // Batch: how often we fetch from API + worker processes trips
-export const BATCH_SIZE_SECONDS = 60 * 60; // 1 hour
+export const BATCH_SIZE_SECONDS = 30 * 60; // 1 hour
 
 export const CHUNKS_PER_BATCH = BATCH_SIZE_SECONDS / CHUNK_SIZE_SECONDS;
 
