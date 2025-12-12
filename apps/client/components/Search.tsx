@@ -2,6 +2,7 @@
 import { getStations, getTripsFromStation } from "@/app/server/trips"
 import { EBike } from "@/components/icons/Ebike"
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command"
+import { FADE_DURATION_MS } from "@/lib/config"
 import { formatDateTime, formatDateTimeFull, formatDistance, formatDurationMinutes } from "@/lib/format"
 import { useAnimationStore } from "@/lib/stores/animation-store"
 import { usePickerStore } from "@/lib/stores/location-picker-store"
@@ -35,7 +36,6 @@ type Trip = {
 type SearchStep = "station" | "datetime" | "results"
 
 const MAX_RESULTS = 10
-const LOOKBACK_MINUTES = 10
 
 type StationRegion = {
   region: string
@@ -265,10 +265,10 @@ export function Search() {
   }
 
   const handleSelectTrip = (trip: Trip) => {
-    const { setAnimationStartDate, selectTrip } = useAnimationStore.getState()
+    const { setAnimationStartDate, selectTrip, speedup } = useAnimationStore.getState()
 
-    // Set start time to LOOKBACK_MINUTES before trip starts
-    const startTime = new Date(new Date(trip.startedAt).getTime() - LOOKBACK_MINUTES * 60 * 1000)
+    // Start animation at fade-in time (accounting for speedup)
+    const startTime = new Date(new Date(trip.startedAt).getTime() - FADE_DURATION_MS * speedup)
     setAnimationStartDate(startTime)
 
     const startRegion = getStationRegion(selectedStation!.ids)
