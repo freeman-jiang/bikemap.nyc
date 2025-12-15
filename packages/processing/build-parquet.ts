@@ -18,7 +18,9 @@
  */
 import { DuckDBConnection } from "@duckdb/node-api";
 import fs from "fs";
+import { globSync } from "glob";
 import path from "path";
+import { formatHumanReadableBytes } from "../../apps/client/lib/utils";
 
 const dataDir = path.join(process.cwd(), "../../data");
 const outputDir = path.join(process.cwd(), "output");
@@ -106,8 +108,24 @@ async function main() {
   const connection = await DuckDBConnection.create();
 
   // 1. Load ALL data without filtering (validation will catch issues)
-  const csvGlob = path.join(dataDir, "**/*202509-citibike-tripdata*.csv");
+  // Match all CSVs under `data/2025/` (including nested month folders)
+  const csvGlob = path.join(dataDir, "2025/**/*.csv");
   console.log(`\nReading CSVs matching: ${csvGlob}`);
+
+  // Expand glob so we can report inputs deterministically
+  const matchedCsvs = globSync(csvGlob, { nodir: true });
+  if (matchedCsvs.length === 0) {
+    throw new Error(`No CSV files matched: ${csvGlob}`);
+  }
+
+  let totalBytes = 0;
+  for (const filePath of matchedCsvs) {
+    totalBytes += fs.statSync(filePath).size;
+  }
+
+  console.log(`Matched CSVs: ${matchedCsvs.length}`);
+  console.log(matchedCsvs.map((p) => `- ${p}`).join("\n"));
+  console.log(`Total input size: ${formatHumanReadableBytes(totalBytes)}`);
 
   const startTime = Date.now();
 
