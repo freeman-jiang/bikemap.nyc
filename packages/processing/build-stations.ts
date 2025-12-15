@@ -1,9 +1,12 @@
 import { DuckDBConnection } from "@duckdb/node-api";
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import { point } from "@turf/helpers";
+import { execSync } from "child_process";
 import fs from "fs";
 import type { Feature, FeatureCollection, Polygon } from "geojson";
 import path from "path";
+
+const gitRoot = execSync("git rev-parse --show-toplevel", { encoding: "utf-8" }).trim();
 
 /**
  * Derive station data from trips Parquet + geocode with neighborhood boundaries.
@@ -151,10 +154,11 @@ function checkStationCoordVariance(
 }
 
 async function main() {
-  const outputDir = path.join(process.cwd(), "output");
-  const dataDir = path.join(process.cwd(), "../../data");
+  const outputDir = path.join(gitRoot, "packages/processing/output");
+  const dataDir = path.join(gitRoot, "data");
+  const clientPublicDir = path.join(gitRoot, "apps/client/public");
   const tripsGlob = path.join(outputDir, "trips/*.parquet");
-  const stationsPath = path.join(outputDir, "stations.json");
+  const stationsPath = path.join(clientPublicDir, "stations.json");
   const geoJsonPath = path.join(
     dataDir,
     "d085e2f8d0b54d4590b1e7d1f35594c1pediacitiesnycneighborhoods.geojson"
