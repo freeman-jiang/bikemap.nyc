@@ -221,6 +221,14 @@ async function main() {
   const parquetPath = path.join(outputDir, "trips/2025.parquet");
 
   // Filter condition for valid rows
+  // NYC bounding box
+  const NYC_BOUNDS = {
+    minLat: 40.3,   
+    maxLat: 41.2,
+    minLng: -74.5,
+    maxLng: -73.5,
+  };
+
   const validRowFilter = `
     ride_id IS NOT NULL
     AND start_station_id IS NOT NULL
@@ -236,6 +244,10 @@ async function main() {
     AND rideable_type IN ('classic_bike', 'electric_bike')
     AND member_casual IN ('member', 'casual')
     AND ended_at >= started_at
+    AND start_lat BETWEEN ${NYC_BOUNDS.minLat} AND ${NYC_BOUNDS.maxLat}
+    AND start_lng BETWEEN ${NYC_BOUNDS.minLng} AND ${NYC_BOUNDS.maxLng}
+    AND end_lat BETWEEN ${NYC_BOUNDS.minLat} AND ${NYC_BOUNDS.maxLat}
+    AND end_lng BETWEEN ${NYC_BOUNDS.minLng} AND ${NYC_BOUNDS.maxLng}
   `;
 
   await connection.run(`
