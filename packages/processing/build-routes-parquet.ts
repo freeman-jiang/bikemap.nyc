@@ -25,7 +25,8 @@ import { formatHumanReadableBytes } from "../../apps/client/lib/utils";
 const gitRoot = execSync("git rev-parse --show-toplevel", { encoding: "utf-8" }).trim();
 
 const OSRM_URL = "http://localhost:5000";
-const CONCURRENCY = 75;
+const CONCURRENCY = 50;
+const FLUSH_EVERY_N_BATCHES = 100; // Flush to disk every N batches (N * CONCURRENCY rows)
 
 // Easing config (baked into routes at build time)
 const EASE_DISTANCE_METERS = 300;
@@ -316,9 +317,10 @@ async function main() {
   if (pairs.length === 0) {
     console.log("\nAll routes already cached!");
   } else {
-    // 7. Fetch routes from OSRM
+    // 7. Fetch routes from OSRM using Appender for bulk inserts
     console.log("Fetching routes from OSRM...");
 
+    const appender = await db.createAppender("Route");
     let success = 0,
       failed = 0;
     const startTime = Date.now();
@@ -327,30 +329,40 @@ async function main() {
       const batch = pairs.slice(i, i + CONCURRENCY);
       const results = await Promise.all(batch.map(fetchRoute));
 
-      // Insert batch into database
-      await db.run("BEGIN TRANSACTION");
+      // Append batch using Appender API
       for (const route of results) {
         if (route) {
-          await db.run(`
-            INSERT OR REPLACE INTO Route (startStationId, endStationId, path, timeFractions, bearings, distance)
-            VALUES ('${route.startStationId}', '${route.endStationId}', '${JSON.stringify(route.path)}', '${JSON.stringify(route.timeFractions)}', '${JSON.stringify(route.bearings)}', ${route.distance})
-          `);
+          appender.appendVarchar(route.startStationId);
+          appender.appendVarchar(route.endStationId);
+          appender.appendVarchar(JSON.stringify(route.path));
+          appender.appendVarchar(JSON.stringify(route.timeFractions));
+          appender.appendVarchar(JSON.stringify(route.bearings));
+          appender.appendDouble(route.distance);
+          appender.endRow();
           success++;
         } else {
           failed++;
         }
       }
-      await db.run("COMMIT");
+      // Flush every N batches for checkpoint durability
+      const batchNum = i / CONCURRENCY;
+      if (batchNum % FLUSH_EVERY_N_BATCHES === 0) {
+        appender.flushSync();
+      }
 
       const elapsed = (Date.now() - startTime) / 1000;
       const rate = (i + batch.length) / elapsed;
       const remaining = pairs.length - (i + batch.length);
       const eta = remaining / rate;
+      const totalProcessed = existingRoutes.size + (i + batch.length);
+      const totalPairs = rawPairs.length;
+      const pct = ((totalProcessed / totalPairs) * 100).toFixed(1);
 
       process.stdout.write(
-        `\r  [${i + batch.length}/${pairs.length}] ${success} ok, ${failed} failed | ${rate.toFixed(0)}/s | ETA: ${(eta / 60).toFixed(1)}min`
+        `\r  [${pct}%] ${success} ok, ${failed} failed | ${rate.toFixed(0)}/s | ETA: ${(eta / 60).toFixed(1)}min`
       );
     }
+    appender.closeSync(); // also flushes remaining rows
     console.log();
 
     if (failed > 0) console.warn(`⚠️  ${failed} routes failed (no OSRM path)`);
