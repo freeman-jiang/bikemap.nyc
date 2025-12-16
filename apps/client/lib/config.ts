@@ -5,7 +5,8 @@
 import { Color } from "@deck.gl/core";
 
 // Default animation start date for trip data timeframe
-export const DEFAULT_ANIMATION_START_DATE = new Date("2025-06-04T22:00:00.000Z"); // June 4, 2025 6pm EDT
+// Sept 11, 2025 4:50pm EDT = 1 hour before peak (4,913 concurrent at 5:50pm)
+export const DEFAULT_ANIMATION_START_DATE = new Date("2025-09-11T20:50:00.000Z");
 
 // Default speedup multiplier for animation
 export const DEFAULT_SPEEDUP = 150;
