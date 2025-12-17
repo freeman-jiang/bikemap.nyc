@@ -1,7 +1,7 @@
 // Builds routes.db (SQLite) with route geometries from OSRM.
 //
 // Prerequisites:
-// - CSV files in data/2025/**/*.csv
+// - CSV files in data/**/*.csv (all years)
 // - apps/client/public/stations.json (from build-stations.ts)
 // - OSRM server running on localhost:5000
 //
@@ -151,14 +151,31 @@ async function getUniquePairsFromCSVs(): Promise<StationPair[]> {
   console.log(`Reading unique station pairs from CSVs using DuckDB...`);
 
   const connection = await DuckDBConnection.create();
+  // Handle both modern (start_station_id) and legacy ("start station id") schemas
+  // union_by_name=true merges different column schemas across CSV files
   const reader = await connection.runAndReadAll(`
-    SELECT DISTINCT
-      start_station_id AS startStationId,
-      end_station_id AS endStationId
-    FROM read_csv_auto('${csvGlob}')
-    WHERE start_station_id IS NOT NULL
-      AND end_station_id IS NOT NULL
-      AND start_station_id != end_station_id
+    WITH all_pairs AS (
+      -- Modern schema (2020+)
+      SELECT DISTINCT
+        start_station_id::VARCHAR AS startStationId,
+        end_station_id::VARCHAR AS endStationId
+      FROM read_csv_auto('${csvGlob}', union_by_name=true)
+      WHERE start_station_id IS NOT NULL
+        AND end_station_id IS NOT NULL
+        AND start_station_id != end_station_id
+
+      UNION
+
+      -- Legacy schema (2013-2019)
+      SELECT DISTINCT
+        "start station id"::VARCHAR AS startStationId,
+        "end station id"::VARCHAR AS endStationId
+      FROM read_csv_auto('${csvGlob}', union_by_name=true)
+      WHERE "start station id" IS NOT NULL
+        AND "end station id" IS NOT NULL
+        AND "start station id" != "end station id"
+    )
+    SELECT DISTINCT startStationId, endStationId FROM all_pairs
   `);
 
   const pairs = reader.getRowObjectsJson() as unknown as StationPair[];
