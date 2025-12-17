@@ -1,16 +1,30 @@
 // Builds Parquet files from Citi Bike CSV trip data with embedded route geometries.
 //
+// Usage: bun run build-parquet.ts <year>
+// Example: bun run build-parquet.ts 2025
+//
 // Prerequisites:
-// - CSV files in data/2025/**/*.csv
+// - CSV files in data/<year>/**/*.csv
 // - output/routes.db (from build-routes.ts)
 //
 // Output:
-// - output/trips/2025.parquet
+// - output/trips/<year>-01.parquet, <year>-02.parquet, etc.
 import { DuckDBConnection } from "@duckdb/node-api";
 import fs from "fs";
 import { globSync } from "glob";
 import path from "path";
-import { csvGlob, dataDir, formatHumanReadableBytes, gitRoot } from "./utils";
+import { dataDir, formatHumanReadableBytes, gitRoot } from "./utils";
+
+// Parse CLI argument
+const targetYearArg = process.argv[2];
+if (!targetYearArg || !/^\d{4}$/.test(targetYearArg)) {
+  console.error("Usage: bun run build-parquet.ts <year>");
+  console.error("Example: bun run build-parquet.ts 2025");
+  process.exit(1);
+}
+const targetYear: string = targetYearArg;
+
+const csvGlob = path.join(dataDir, `${targetYear}/**/*.csv`);
 
 const outputDir = path.join(gitRoot, "packages/processing/output");
 const routesDbPath = path.join(outputDir, "routes.db");
@@ -343,6 +357,12 @@ async function main() {
   let totalParquetBytes = 0;
 
   for (const { month } of months) {
+    // Skip months not in target year (e.g., Dec 2024 trips in 2025 CSVs)
+    if (!month.startsWith(targetYear)) {
+      console.log(`  Skipping ${month} (not in target year ${targetYear})`);
+      continue;
+    }
+
     const parts = month.split("-");
     const year = parts[0];
     const monthNum = parts[1];
