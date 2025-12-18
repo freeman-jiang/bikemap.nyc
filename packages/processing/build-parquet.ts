@@ -98,11 +98,10 @@ async function main() {
 
   const connection = await DuckDBConnection.create();
 
-  // Configure DuckDB for large workloads - spill to disk instead of using 40GB RAM
+  // Configure DuckDB for large workloads - spill to disk when needed
   const tempDir = path.join(outputDir, "duckdb_tmp");
   await mkdir(tempDir, { recursive: true });
   await connection.run(`SET temp_directory = '${tempDir}'`);
-  await connection.run(`SET memory_limit = '32GB'`);
 
   // 1. Load ALL data from all years using unified schema
   // Uses COALESCE to handle both legacy (2013-2019) and modern (2020+) schemas
