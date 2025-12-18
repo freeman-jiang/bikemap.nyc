@@ -395,10 +395,10 @@ async function main() {
     totalTripCount += monthTripCount;
     totalWithRoute += monthWithRoute;
 
-    // Export to parquet
+    // Export to parquet (only trips with routes - round trips and ferry crossings are excluded)
     const monthPath = path.join(outputDir, `trips/${month}.parquet`);
     await connection.run(`
-      COPY (SELECT * FROM joined_month ORDER BY startedAt)
+      COPY (SELECT * FROM joined_month WHERE routeGeometry IS NOT NULL ORDER BY startedAt)
       TO '${monthPath}' (FORMAT PARQUET, COMPRESSION ZSTD)
     `);
 
