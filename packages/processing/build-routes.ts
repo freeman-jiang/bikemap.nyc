@@ -19,13 +19,12 @@ import { Database } from "bun:sqlite";
 import fs from "fs";
 import path from "path";
 import { z } from "zod";
-import { csvGlob, gitRoot } from "./utils";
+import { csvGlob, gitRoot, outputDir } from "./utils";
 
 const OSRM_URL = "http://localhost:5000";
 const CONCURRENCY = 50;
 const WRITE_BATCH_SIZE = 5000;
 
-const outputDir = path.join(gitRoot, "packages/processing/output");
 const routesDbPath = path.join(outputDir, "routes.db");
 
 // Station format from build-stations.ts

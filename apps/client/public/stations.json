@@ -140,7 +140,7 @@
     "aliases": [
       "W 14 St & The High Line"
     ],
-    "latitude": 40.74196648997011,
+    "latitude": 40.74196648997012,
     "longitude": -74.00817296581025,
     "borough": "Manhattan",
     "neighborhood": "West Village"
@@ -204,14 +204,6 @@
     "neighborhood": "Gowanus"
   },
   {
-    "name": "10 St & 4 Ave",
-    "aliases": [],
-    "latitude": 40.66967356370341,
-    "longitude": -73.98898908183764,
-    "borough": "Brooklyn",
-    "neighborhood": "South Slope"
-  },
-  {
     "name": "10 St & 5 Ave",
     "aliases": [],
     "latitude": 40.6686273,
@@ -258,6 +250,14 @@
     "longitude": -73.86843,
     "borough": "Queens",
     "neighborhood": "East Elmhurst"
+  },
+  {
+    "name": "101 St & Fort Hamilton Pkwy",
+    "aliases": [],
+    "latitude": 40.61124,
+    "longitude": -74.03282,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
   },
   {
     "name": "102 St & 34 Ave",
@@ -357,9 +357,11 @@
   },
   {
     "name": "11 Ave & W 59 St",
-    "aliases": [],
-    "latitude": 40.77149671054441,
-    "longitude": -73.99046033620834,
+    "aliases": [
+      "W 59 St & West End Ave"
+    ],
+    "latitude": 40.771634,
+    "longitude": -73.99058299999999,
     "borough": "Manhattan",
     "neighborhood": "Upper West Side"
   },
@@ -374,8 +376,8 @@
   {
     "name": "11 St & 43 Ave",
     "aliases": [],
-    "latitude": 40.75177,
-    "longitude": -73.94821,
+    "latitude": 40.751907,
+    "longitude": -73.9479119,
     "borough": "Queens",
     "neighborhood": "Long Island City"
   },
@@ -508,6 +510,14 @@
     "neighborhood": "Hoboken"
   },
   {
+    "name": "15 Ave & 37 St",
+    "aliases": [],
+    "latitude": 40.63899,
+    "longitude": -73.98074,
+    "borough": "Brooklyn",
+    "neighborhood": "Borough Park"
+  },
+  {
     "name": "16 St & 4 Ave",
     "aliases": [
       "16th St & 4th Ave"
@@ -568,6 +578,36 @@
     "neighborhood": "Sunset Park"
   },
   {
+    "name": "2 Ave & E 125 St",
+    "aliases": [
+      "2 Av & E 125 St"
+    ],
+    "latitude": 40.802554,
+    "longitude": -73.933509,
+    "borough": "Manhattan",
+    "neighborhood": "East Harlem"
+  },
+  {
+    "name": "2 Ave & E 104 St",
+    "aliases": [
+      "2 Ave  & E 104 St"
+    ],
+    "latitude": 40.7892105,
+    "longitude": -73.94370784,
+    "borough": "Manhattan",
+    "neighborhood": "East Harlem"
+  },
+  {
+    "name": "2 Ave & E 29 St",
+    "aliases": [
+      "2 Ave & 29 St"
+    ],
+    "latitude": 40.741596755487365,
+    "longitude": -73.97815683522035,
+    "borough": "Manhattan",
+    "neighborhood": "Kips Bay"
+  },
+  {
     "name": "2 Ave & 32 St",
     "aliases": [],
     "latitude": 40.659176,
@@ -621,10 +661,10 @@
     "neighborhood": "Gowanus"
   },
   {
-    "name": "2 Ave & E 104 St",
+    "name": "2 Ave & E 105 St",
     "aliases": [],
-    "latitude": 40.7892105,
-    "longitude": -73.94370784,
+    "latitude": 40.7898175,
+    "longitude": -73.94296109,
     "borough": "Manhattan",
     "neighborhood": "East Harlem"
   },
@@ -635,22 +675,6 @@
     "longitude": -73.9349,
     "borough": "Manhattan",
     "neighborhood": "East Harlem"
-  },
-  {
-    "name": "2 Ave & E 125 St",
-    "aliases": [],
-    "latitude": 40.802554,
-    "longitude": -73.933509,
-    "borough": "Manhattan",
-    "neighborhood": "East Harlem"
-  },
-  {
-    "name": "2 Ave & E 29 St",
-    "aliases": [],
-    "latitude": 40.741723510974715,
-    "longitude": -73.97809267044067,
-    "borough": "Manhattan",
-    "neighborhood": "Kips Bay"
   },
   {
     "name": "2 Ave & E 31 St",
@@ -707,6 +731,16 @@
     "aliases": [],
     "latitude": 40.73915272763701,
     "longitude": -74.0330819785595,
+    "borough": "New Jersey",
+    "neighborhood": "Hoboken"
+  },
+  {
+    "name": "Marshall St & 2 St",
+    "aliases": [
+      "2 St HBLR - 2 St & Marshall St"
+    ],
+    "latitude": 40.74080195082679,
+    "longitude": -74.04247792069721,
     "borough": "New Jersey",
     "neighborhood": "Hoboken"
   },
@@ -841,6 +875,14 @@
     "neighborhood": "Sunset Park"
   },
   {
+    "name": "21 St & 41 Ave",
+    "aliases": [],
+    "latitude": 40.75383343437622,
+    "longitude": -73.94267678260802,
+    "borough": "Queens",
+    "neighborhood": "Long Island City"
+  },
+  {
     "name": "21 St & 43 Ave",
     "aliases": [],
     "latitude": 40.75052534,
@@ -887,6 +929,14 @@
     "longitude": -73.88674,
     "borough": "Queens",
     "neighborhood": "East Elmhurst"
+  },
+  {
+    "name": "23 Rd & 29 St",
+    "aliases": [],
+    "latitude": 40.77406014982225,
+    "longitude": -73.914934694767,
+    "borough": "Queens",
+    "neighborhood": "Ditmars Steinway"
   },
   {
     "name": "23 Rd & 31 St",
@@ -957,8 +1007,8 @@
     "aliases": [
       "24 St & 41 Ave (original)"
     ],
-    "latitude": 40.75270875,
-    "longitude": -73.93974075,
+    "latitude": 40.7525915,
+    "longitude": -73.939866,
     "borough": "Queens",
     "neighborhood": "Long Island City"
   },
@@ -1131,6 +1181,14 @@
     "aliases": [],
     "latitude": 40.627,
     "longitude": -74.02948,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
+  },
+  {
+    "name": "3 Ave & 92 St",
+    "aliases": [],
+    "latitude": 40.61946,
+    "longitude": -74.03261,
     "borough": "New Jersey",
     "neighborhood": "Jersey City"
   },
@@ -2023,8 +2081,8 @@
     "aliases": [
       "39 St & 2 Ave - Citi Bike HQ at Industry City"
     ],
-    "latitude": 40.655399774489155,
-    "longitude": -74.01062786579567,
+    "latitude": 40.655399887239156,
+    "longitude": -74.01062793289566,
     "borough": "Brooklyn",
     "neighborhood": "Sunset Park"
   },
@@ -2055,10 +2113,11 @@
   {
     "name": "N 11 St & Kent Ave",
     "aliases": [
-      "3969.TEMP (Bike The Branches - Central Branch)"
+      "3969.TEMP (Bike The Branches - Central Branch)",
+      "E.T. Bike-In Movie Valet Station "
     ],
-    "latitude": 40.7226669431911,
-    "longitude": -73.95916665335369,
+    "latitude": 40.722728628794066,
+    "longitude": -73.9591491022358,
     "borough": "Brooklyn",
     "neighborhood": "Williamsburg"
   },
@@ -2103,10 +2162,34 @@
     "neighborhood": "Jersey City"
   },
   {
+    "name": "4 Ave & 76 St",
+    "aliases": [],
+    "latitude": 40.63005,
+    "longitude": -74.0255,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
+  },
+  {
     "name": "4 Ave & 81 St",
     "aliases": [],
     "latitude": 40.62643,
     "longitude": -74.02707,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
+  },
+  {
+    "name": "4 Ave & 85 St",
+    "aliases": [],
+    "latitude": 40.62354,
+    "longitude": -74.02817,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
+  },
+  {
+    "name": "4 Ave & 87 St",
+    "aliases": [],
+    "latitude": 40.62184,
+    "longitude": -74.02863,
     "borough": "New Jersey",
     "neighborhood": "Jersey City"
   },
@@ -2117,6 +2200,22 @@
     "longitude": -73.98876585,
     "borough": "Brooklyn",
     "neighborhood": "Gowanus"
+  },
+  {
+    "name": "4 Ave & 94 St",
+    "aliases": [],
+    "latitude": 40.61689,
+    "longitude": -74.03091,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
+  },
+  {
+    "name": "4 Ave & 99 St",
+    "aliases": [],
+    "latitude": 40.61327,
+    "longitude": -74.03315,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
   },
   {
     "name": "4 Ave & E 12 St",
@@ -2332,7 +2431,7 @@
     "name": "44 Dr & 21 St",
     "aliases": [],
     "latitude": 40.748,
-    "longitude": -73.9460927,
+    "longitude": -73.946093,
     "borough": "Queens",
     "neighborhood": "Long Island City"
   },
@@ -2375,6 +2474,16 @@
     "longitude": -73.92103672027588,
     "borough": "Queens",
     "neighborhood": "Sunnyside"
+  },
+  {
+    "name": "Congress St & Clinton St",
+    "aliases": [
+      "4455.10"
+    ],
+    "latitude": 40.68825516598005,
+    "longitude": -73.99545192718506,
+    "borough": "Brooklyn",
+    "neighborhood": "Cobble Hill"
   },
   {
     "name": "45 Ave & 21 St",
@@ -2657,6 +2766,16 @@
     "neighborhood": "Astoria"
   },
   {
+    "name": "5 Ave & E 135 St",
+    "aliases": [
+      "5 Av & E 135 St"
+    ],
+    "latitude": 40.812191,
+    "longitude": -73.937838,
+    "borough": "Manhattan",
+    "neighborhood": "East Harlem"
+  },
+  {
     "name": "5 Av & W 139 St",
     "aliases": [
       "5 Ave & W 139 St"
@@ -2733,14 +2852,6 @@
     "longitude": -73.94177350000001,
     "borough": "Manhattan",
     "neighborhood": "Harlem"
-  },
-  {
-    "name": "5 Ave & E 135 St",
-    "aliases": [],
-    "latitude": 40.812191,
-    "longitude": -73.937838,
-    "borough": "Manhattan",
-    "neighborhood": "East Harlem"
   },
   {
     "name": "5 Ave & E 29 St",
@@ -2921,20 +3032,22 @@
     "neighborhood": "Elmhurst"
   },
   {
+    "name": "51 St & Hobart St",
+    "aliases": [
+      "51 St &  Hobart St"
+    ],
+    "latitude": 40.7577181701252,
+    "longitude": -73.90767671797465,
+    "borough": "Queens",
+    "neighborhood": "Astoria"
+  },
+  {
     "name": "51 St & 43 Ave",
     "aliases": [],
     "latitude": 40.74451,
     "longitude": -73.91412,
     "borough": "Queens",
     "neighborhood": "Sunnyside"
-  },
-  {
-    "name": "51 St & Hobart St",
-    "aliases": [],
-    "latitude": 40.75767234025041,
-    "longitude": -73.90769943594933,
-    "borough": "Queens",
-    "neighborhood": "Astoria"
   },
   {
     "name": "51 St & Queens Blvd",
@@ -3203,14 +3316,6 @@
     "neighborhood": "Maspeth"
   },
   {
-    "name": "57 St & Woodside Ave",
-    "aliases": [],
-    "latitude": 40.74578861252213,
-    "longitude": -73.9072778339874,
-    "borough": "Queens",
-    "neighborhood": "Woodside"
-  },
-  {
     "name": "58 St & 2 Ave",
     "aliases": [
       "58 St & 2 Ave - Brooklyn Army Terminal Vaccination Site"
@@ -3243,16 +3348,6 @@
     "longitude": -74.026081,
     "borough": "New Jersey",
     "neighborhood": "Jersey City"
-  },
-  {
-    "name": "58th St Depot",
-    "aliases": [
-      "NYCBS Depot - PIT"
-    ],
-    "latitude": 40.71690978045965,
-    "longitude": -73.98383796215057,
-    "borough": "Manhattan",
-    "neighborhood": "Lower East Side"
   },
   {
     "name": "59 St & 4 Ave",
@@ -3303,6 +3398,19 @@
     "neighborhood": "Sunset Park"
   },
   {
+    "name": "6 Ave & W 45 St",
+    "aliases": [
+      "6 Ave & 45 St",
+      "W 45 St & 6 Ave",
+      "W 45 St & 6 Ave (OLD)",
+      "W 45 St & 6 Ave (1)"
+    ],
+    "latitude": 40.75683788120635,
+    "longitude": -73.98273247678272,
+    "borough": "Manhattan",
+    "neighborhood": "Theater District"
+  },
+  {
     "name": "6 Ave & 55 St",
     "aliases": [],
     "latitude": 40.640831,
@@ -3317,6 +3425,14 @@
     "longitude": -74.013821,
     "borough": "Brooklyn",
     "neighborhood": "Sunset Park"
+  },
+  {
+    "name": "6 Ave & 74 St",
+    "aliases": [],
+    "latitude": 40.629233,
+    "longitude": -74.019864,
+    "borough": "Brooklyn",
+    "neighborhood": "Bay Ridge"
   },
   {
     "name": "6 Ave & 78 St",
@@ -3373,19 +3489,6 @@
     "longitude": -73.98805,
     "borough": "Manhattan",
     "neighborhood": "Chelsea"
-  },
-  {
-    "name": "6 Ave & W 45 St",
-    "aliases": [
-      "W 45 St & 6 Ave",
-      "W 45 St & 6 Ave -",
-      "W 45 St & 6 Ave (OLD)",
-      "W 45 St & 6 Ave (1)"
-    ],
-    "latitude": 40.756785122412715,
-    "longitude": -73.98272174156543,
-    "borough": "Manhattan",
-    "neighborhood": "Theater District"
   },
   {
     "name": "6 Ave & Walker St",
@@ -3556,16 +3659,6 @@
     "neighborhood": "Woodside"
   },
   {
-    "name": "7 Ave & 62 St",
-    "aliases": [
-      "62 St & 7 Ave"
-    ],
-    "latitude": 40.635744,
-    "longitude": -74.01311799999999,
-    "borough": "Brooklyn",
-    "neighborhood": "Sunset Park"
-  },
-  {
     "name": "62 St & Northern Blvd",
     "aliases": [],
     "latitude": 40.754176,
@@ -3644,6 +3737,14 @@
     "longitude": -73.90022,
     "borough": "Queens",
     "neighborhood": "Maspeth"
+  },
+  {
+    "name": "65 Pl & Central Ave",
+    "aliases": [],
+    "latitude": 40.70264,
+    "longitude": -73.88981,
+    "borough": "Queens",
+    "neighborhood": "Glendale"
   },
   {
     "name": "65 Pl & Woodside Ave",
@@ -3790,6 +3891,24 @@
     "neighborhood": "Sunset Park"
   },
   {
+    "name": "7 Ave & 62 St",
+    "aliases": [],
+    "latitude": 40.63556,
+    "longitude": -74.01298,
+    "borough": "Brooklyn",
+    "neighborhood": "Sunset Park"
+  },
+  {
+    "name": "7 Ave S & Bleecker St",
+    "aliases": [
+      "7 Ave & Bleecker St"
+    ],
+    "latitude": 40.73213896287381,
+    "longitude": -74.00363802909851,
+    "borough": "Manhattan",
+    "neighborhood": "West Village"
+  },
+  {
     "name": "7 Ave & Central Park South",
     "aliases": [],
     "latitude": 40.7667405590595,
@@ -3820,14 +3939,6 @@
     "longitude": -73.980973,
     "borough": "Manhattan",
     "neighborhood": "Midtown"
-  },
-  {
-    "name": "7 Ave S & Bleecker St",
-    "aliases": [],
-    "latitude": 40.73213896287381,
-    "longitude": -74.00363802909851,
-    "borough": "Manhattan",
-    "neighborhood": "West Village"
   },
   {
     "name": "7 St & 3 Ave",
@@ -4004,6 +4115,24 @@
     "longitude": -73.89081,
     "borough": "Queens",
     "neighborhood": "East Elmhurst"
+  },
+  {
+    "name": "77 St & Colonial Rd",
+    "aliases": [],
+    "latitude": 40.63121,
+    "longitude": -74.03318,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
+  },
+  {
+    "name": "E 78 St & 2 Ave",
+    "aliases": [
+      "78 St & 2 Ave"
+    ],
+    "latitude": 40.7727966,
+    "longitude": -73.95577801,
+    "borough": "Manhattan",
+    "neighborhood": "Upper East Side"
   },
   {
     "name": "78 St & Northern Blvd",
@@ -4204,6 +4333,17 @@
     "neighborhood": "Jackson Heights"
   },
   {
+    "name": "Schermerhorn St & Court St",
+    "aliases": [
+      "Schermerhorn St and Court St",
+      "85"
+    ],
+    "latitude": 40.691029213983064,
+    "longitude": -73.99183341814931,
+    "borough": "Brooklyn",
+    "neighborhood": "Brooklyn Heights"
+  },
+  {
     "name": "85 St & Northern Blvd",
     "aliases": [],
     "latitude": 40.75601,
@@ -4260,12 +4400,22 @@
     "neighborhood": "East Elmhurst"
   },
   {
-    "name": "8D OPS 01",
+    "name": "89 St & 3 Ave",
     "aliases": [],
-    "latitude": 40.662907768316856,
-    "longitude": -73.99972200393677,
-    "borough": "Brooklyn",
-    "neighborhood": "Sunset Park"
+    "latitude": 40.62137,
+    "longitude": -74.03209,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
+  },
+  {
+    "name": "Picnic Point",
+    "aliases": [
+      "8D OPS 01"
+    ],
+    "latitude": 40.684997171374036,
+    "longitude": -74.02540147304535,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
   },
   {
     "name": "9 Ave & W 14 St",
@@ -4465,6 +4615,14 @@
     "neighborhood": "Jackson Heights"
   },
   {
+    "name": "96 St & Marine Ave",
+    "aliases": [],
+    "latitude": 40.61699,
+    "longitude": -74.03568,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
+  },
+  {
     "name": "96 St & Northern Blvd",
     "aliases": [],
     "latitude": 40.75712,
@@ -4503,6 +4661,14 @@
     "longitude": -73.86649,
     "borough": "Queens",
     "neighborhood": "Corona"
+  },
+  {
+    "name": "99 St & 3 Ave",
+    "aliases": [],
+    "latitude": 40.61451,
+    "longitude": -74.03502,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
   },
   {
     "name": "99 St & 32 Ave",
@@ -4633,6 +4799,14 @@
     "neighborhood": "Harlem"
   },
   {
+    "name": "Adams St & 11 St",
+    "aliases": [],
+    "latitude": 40.750915534784994,
+    "longitude": -74.03354063630104,
+    "borough": "New Jersey",
+    "neighborhood": "Hoboken"
+  },
+  {
     "name": "Adams St & 12 St",
     "aliases": [],
     "latitude": 40.751889392240685,
@@ -4651,7 +4825,7 @@
   {
     "name": "Adams St & Prospect St",
     "aliases": [],
-    "latitude": 40.700763083261506,
+    "latitude": 40.70076308326151,
     "longitude": -73.98869812488556,
     "borough": "Brooklyn",
     "neighborhood": "Downtown Brooklyn"
@@ -4663,6 +4837,14 @@
     "longitude": -73.97178913,
     "borough": "Brooklyn",
     "neighborhood": "Fort Greene"
+  },
+  {
+    "name": "Adventures NYC",
+    "aliases": [],
+    "latitude": 40.77376867022874,
+    "longitude": -73.97116988897324,
+    "borough": "Manhattan",
+    "neighborhood": "Central Park"
   },
   {
     "name": "Albany Ave & Carroll St",
@@ -4687,16 +4869,6 @@
     "longitude": -73.93896,
     "borough": "Brooklyn",
     "neighborhood": "Crown Heights"
-  },
-  {
-    "name": "Winthrop St & Albany Ave",
-    "aliases": [
-      "Albany Ave & Winthrop St"
-    ],
-    "latitude": 40.657804999999996,
-    "longitude": -73.93973500000001,
-    "borough": "Brooklyn",
-    "neighborhood": "Prospect-Lefferts Gardens"
   },
   {
     "name": "Albany St & Greenwich St",
@@ -4886,9 +5058,12 @@
   },
   {
     "name": "Amsterdam Ave & W 189 St",
-    "aliases": [],
-    "latitude": 40.85318758861975,
-    "longitude": -73.92715752124786,
+    "aliases": [
+      "Amsterdam Ave & W 189 St new",
+      "Amsterdam Ave & W 189 St old"
+    ],
+    "latitude": 40.853172392413164,
+    "longitude": -73.92713634749857,
     "borough": "Manhattan",
     "neighborhood": "Washington Heights"
   },
@@ -4967,10 +5142,10 @@
     "neighborhood": "Mount Hope"
   },
   {
-    "name": "Handlebar @ Gowanus",
+    "name": "Apache",
     "aliases": [
-      "Apache",
-      "GOW Tech Shop"
+      "GOW Tech Shop",
+      "Handlebar @ Gowanus"
     ],
     "latitude": 40.669788792083516,
     "longitude": -73.99490118026733,
@@ -4992,6 +5167,14 @@
     "longitude": -73.9024238,
     "borough": "Bronx",
     "neighborhood": "Kingsbridge"
+  },
+  {
+    "name": "Arion Pl & Broadway",
+    "aliases": [],
+    "latitude": 40.697891,
+    "longitude": -73.936642,
+    "borough": "Brooklyn",
+    "neighborhood": "Bushwick"
   },
   {
     "name": "Arlington Ave & Bramhall Ave",
@@ -5134,14 +5317,23 @@
     "neighborhood": "Stuyvesant Town"
   },
   {
+    "name": "Ave C & McDonald Ave",
+    "aliases": [],
+    "latitude": 40.6403436,
+    "longitude": -73.9791522,
+    "borough": "Brooklyn",
+    "neighborhood": "Kensington"
+  },
+  {
     "name": "Ave D & E 10 St",
     "aliases": [
       "Avenue D & E 10 St",
+      "Bike Mechanics at Riis Room B 2",
       "NYCBS Depot - RIS",
       "Bike Mechanics at Riis Room A"
     ],
-    "latitude": 40.72514119742299,
-    "longitude": -73.97493170989044,
+    "latitude": 40.72515811793839,
+    "longitude": -73.97488260791235,
     "borough": "Manhattan",
     "neighborhood": "East Village"
   },
@@ -5234,8 +5426,8 @@
   {
     "name": "Bainbridge Ave & E 193 St",
     "aliases": [],
-    "latitude": 40.86415477605928,
-    "longitude": -73.892452880543,
+    "latitude": 40.86389,
+    "longitude": -73.89246,
     "borough": "Bronx",
     "neighborhood": "Fordham"
   },
@@ -5353,11 +5545,21 @@
   },
   {
     "name": "Bayard St & Leonard St",
-    "aliases": [],
-    "latitude": 40.71915571696044,
-    "longitude": -73.94885390996933,
+    "aliases": [
+      "Leonard St & Bayard St"
+    ],
+    "latitude": 40.71921785848022,
+    "longitude": -73.94873195498467,
     "borough": "Brooklyn",
     "neighborhood": "Greenpoint"
+  },
+  {
+    "name": "Bayside Park",
+    "aliases": [],
+    "latitude": 40.698650544,
+    "longitude": -74.082079678,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
   },
   {
     "name": "Beaver St & Fayette St",
@@ -5516,14 +5718,6 @@
     "neighborhood": "Crown Heights"
   },
   {
-    "name": "Bergen St & Carlton Ave",
-    "aliases": [],
-    "latitude": 40.680092336223886,
-    "longitude": -73.97118045900022,
-    "borough": "Brooklyn",
-    "neighborhood": "Prospect Heights"
-  },
-  {
     "name": "Bergen St & Flatbush Ave",
     "aliases": [],
     "latitude": 40.680944723477296,
@@ -5604,6 +5798,14 @@
     "neighborhood": "Williamsburg"
   },
   {
+    "name": "Bethune Center",
+    "aliases": [],
+    "latitude": 40.704957516728605,
+    "longitude": -74.08593088388443,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
+  },
+  {
     "name": "Beverley Rd & E 49 St",
     "aliases": [],
     "latitude": 40.64621,
@@ -5647,8 +5849,38 @@
     "neighborhood": "Gowanus"
   },
   {
-    "name": "Bleecker St & Crosby St",
+    "name": "Plaza St East & Flatbush Ave",
+    "aliases": [
+      "Bike The Branches - Central Branch"
+    ],
+    "latitude": 40.67297020613873,
+    "longitude": -73.96898593571473,
+    "borough": "Brooklyn",
+    "neighborhood": "Prospect Park"
+  },
+  {
+    "name": "Wolcott St & Dwight St",
+    "aliases": [
+      "Bike The Branches - Red Hook Branch"
+    ],
+    "latitude": 40.67533846533706,
+    "longitude": -74.01004507272472,
+    "borough": "Brooklyn",
+    "neighborhood": "Red Hook"
+  },
+  {
+    "name": "Bike in Movie Night | Prospect Park Bandshell",
     "aliases": [],
+    "latitude": 40.662987,
+    "longitude": -73.976918,
+    "borough": "Brooklyn",
+    "neighborhood": "Prospect Park"
+  },
+  {
+    "name": "Bleecker St & Crosby St",
+    "aliases": [
+      "Bleecker St & Lafayette St"
+    ],
     "latitude": 40.72615604980408,
     "longitude": -73.99510189890862,
     "borough": "Manhattan",
@@ -5798,10 +6030,12 @@
     "name": "Bressler",
     "aliases": [
       "NYCBS Depot - SSP",
-      "NYCBS Test"
+      "NYCBS Test",
+      "Kiosk in a box Motivate",
+      "SSP Tech Workshop"
     ],
-    "latitude": 40.64663772236549,
-    "longitude": -74.01635591140746,
+    "latitude": 40.646653813198874,
+    "longitude": -74.01632683085784,
     "borough": "Brooklyn",
     "neighborhood": "Sunset Park"
   },
@@ -5908,9 +6142,11 @@
   },
   {
     "name": "Broadway & Berry St",
-    "aliases": [],
-    "latitude": 40.71044554,
-    "longitude": -73.96525063,
+    "aliases": [
+      "Broadway and Berry St"
+    ],
+    "latitude": 40.7104034196129,
+    "longitude": -73.96527726392884,
     "borough": "Brooklyn",
     "neighborhood": "Williamsburg"
   },
@@ -5933,10 +6169,11 @@
   {
     "name": "Broadway & E 21 St",
     "aliases": [
-      "Broadway & E 22 St"
+      "Broadway & E 22 St",
+      "Broadway & E 22 St - Valet Scan"
     ],
-    "latitude": 40.74011580429497,
-    "longitude": -73.98956851303475,
+    "latitude": 40.74019160286332,
+    "longitude": -73.98956270868983,
     "borough": "Manhattan",
     "neighborhood": "Flatiron District"
   },
@@ -6026,8 +6263,8 @@
       "Broadway & W  38 St",
       "Broadway & W 39 St"
     ],
-    "latitude": 40.75299627333334,
-    "longitude": -73.98721612666667,
+    "latitude": 40.7529884105356,
+    "longitude": -73.98726038791702,
     "borough": "Manhattan",
     "neighborhood": "Midtown"
   },
@@ -6538,8 +6775,8 @@
   {
     "name": "Cadman Plaza E & Johnson St",
     "aliases": [],
-    "latitude": 40.69531727766904,
-    "longitude": -73.99015724658966,
+    "latitude": 40.695317,
+    "longitude": -73.990157,
     "borough": "Brooklyn",
     "neighborhood": "Downtown Brooklyn"
   },
@@ -6868,18 +7105,28 @@
   {
     "name": "Center Blvd & 51 Ave",
     "aliases": [],
-    "latitude": 40.743366080270214,
+    "latitude": 40.74336608027021,
     "longitude": -73.95960688591003,
     "borough": "Queens",
     "neighborhood": "Long Island City"
   },
   {
     "name": "Center Blvd & Borden Ave",
-    "aliases": [],
+    "aliases": [
+      "Center Blvd & Borden Ave"
+    ],
     "latitude": 40.74161,
     "longitude": -73.96044,
     "borough": "Queens",
     "neighborhood": "Long Island City"
+  },
+  {
+    "name": "Central Ave",
+    "aliases": [],
+    "latitude": 40.7467299,
+    "longitude": -74.0492509,
+    "borough": "New Jersey",
+    "neighborhood": "Hoboken"
   },
   {
     "name": "Central Ave & Covert St",
@@ -7027,7 +7274,7 @@
   {
     "name": "Central Park W & W 91 St",
     "aliases": [],
-    "latitude": 40.78866499127883,
+    "latitude": 40.78866499127884,
     "longitude": -73.96680057048798,
     "borough": "Manhattan",
     "neighborhood": "Central Park"
@@ -7215,7 +7462,9 @@
   },
   {
     "name": "Church St & Worth St",
-    "aliases": [],
+    "aliases": [
+      "Church St & Thomas St"
+    ],
     "latitude": 40.71688538495366,
     "longitude": -74.00650128722191,
     "borough": "Manhattan",
@@ -7352,11 +7601,10 @@
   {
     "name": "Cliff St & Fulton St",
     "aliases": [
-      "Cliff St & Fulton St (Old)",
       "Cliff St & Fulton St_1"
     ],
-    "latitude": 40.708290302442634,
-    "longitude": -74.00512742627552,
+    "latitude": 40.70827648183197,
+    "longitude": -74.00517072720663,
     "borough": "Manhattan",
     "neighborhood": "Financial District"
   },
@@ -7385,6 +7633,17 @@
     "neighborhood": "Clinton Hill"
   },
   {
+    "name": "Clinton St & Cherry St",
+    "aliases": [
+      "Clinton St\t& Cherry St",
+      "Clinton St\\t& Cherry St"
+    ],
+    "latitude": 40.711471394469264,
+    "longitude": -73.98672603070736,
+    "borough": "Manhattan",
+    "neighborhood": "Lower East Side"
+  },
+  {
     "name": "Clinton St & 4 Place",
     "aliases": [],
     "latitude": 40.6783563,
@@ -7407,14 +7666,6 @@
     "longitude": -74.00194698,
     "borough": "Brooklyn",
     "neighborhood": "Red Hook"
-  },
-  {
-    "name": "Clinton St & Cherry St",
-    "aliases": [],
-    "latitude": 40.711471394469264,
-    "longitude": -73.98672603070736,
-    "borough": "Manhattan",
-    "neighborhood": "Lower East Side"
   },
   {
     "name": "Clinton St & Grand St",
@@ -7497,6 +7748,14 @@
     "neighborhood": "Jersey City"
   },
   {
+    "name": "Colonial Rd & 71 St",
+    "aliases": [],
+    "latitude": 40.63537,
+    "longitude": -74.03202,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
+  },
+  {
     "name": "Colonial Rd & 83 St",
     "aliases": [],
     "latitude": 40.62691,
@@ -7527,6 +7786,14 @@
     "longitude": -73.99548059,
     "borough": "Brooklyn",
     "neighborhood": "Brooklyn Heights"
+  },
+  {
+    "name": "Columbia Park",
+    "aliases": [],
+    "latitude": 40.6970299,
+    "longitude": -74.0969366,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
   },
   {
     "name": "Columbia St & Degraw St",
@@ -7681,14 +7948,6 @@
     "neighborhood": "Concourse Village"
   },
   {
-    "name": "Congress St & Clinton St",
-    "aliases": [],
-    "latitude": 40.6881529,
-    "longitude": -73.99520919,
-    "borough": "Brooklyn",
-    "neighborhood": "Cobble Hill"
-  },
-  {
     "name": "Congress St & Hicks St",
     "aliases": [],
     "latitude": 40.6893952,
@@ -7722,9 +7981,11 @@
   },
   {
     "name": "Cooper Square & Astor Pl",
-    "aliases": [],
-    "latitude": 40.72951496224949,
-    "longitude": -73.99075269699097,
+    "aliases": [
+      "Cooper Square & E 7 St"
+    ],
+    "latitude": 40.729375730674775,
+    "longitude": -73.99081036448479,
     "borough": "Manhattan",
     "neighborhood": "East Village"
   },
@@ -7817,10 +8078,12 @@
     "neighborhood": "Flatbush"
   },
   {
-    "name": "Court St & Nelson St",
-    "aliases": [],
-    "latitude": 40.6763947,
-    "longitude": -73.99869893,
+    "name": "Court St & Huntington St",
+    "aliases": [
+      "Court St & Nelson St"
+    ],
+    "latitude": 40.67617619476563,
+    "longitude": -73.99882417916598,
     "borough": "Brooklyn",
     "neighborhood": "Carroll Gardens"
   },
@@ -8049,6 +8312,14 @@
     "neighborhood": "Kensington"
   },
   {
+    "name": "Danforth Light Rail",
+    "aliases": [],
+    "latitude": 40.69263996618329,
+    "longitude": -74.08801227807997,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
+  },
+  {
     "name": "Davidson Ave & W Burnside Ave",
     "aliases": [],
     "latitude": 40.853646,
@@ -8219,6 +8490,14 @@
     "neighborhood": "Lower East Side"
   },
   {
+    "name": "Devoe St & Leonard St",
+    "aliases": [],
+    "latitude": 40.71348658,
+    "longitude": -73.94792458,
+    "borough": "Brooklyn",
+    "neighborhood": "Williamsburg"
+  },
+  {
     "name": "Devoe St & Lorimer St",
     "aliases": [],
     "latitude": 40.71335226222875,
@@ -8243,6 +8522,16 @@
     "neighborhood": "Hoboken"
   },
   {
+    "name": "Ditmars Blvd & 43 St",
+    "aliases": [
+      "Ditmars Ave & 43 St"
+    ],
+    "latitude": 40.771203,
+    "longitude": -73.903865,
+    "borough": "Queens",
+    "neighborhood": "Ditmars Steinway"
+  },
+  {
     "name": "Ditmars Blvd & 102 St",
     "aliases": [],
     "latitude": 40.76894,
@@ -8265,14 +8554,6 @@
     "longitude": -73.86035,
     "borough": "Queens",
     "neighborhood": "East Elmhurst"
-  },
-  {
-    "name": "Ditmars Blvd & 43 St",
-    "aliases": [],
-    "latitude": 40.771203,
-    "longitude": -73.903865,
-    "borough": "Queens",
-    "neighborhood": "Ditmars Steinway"
   },
   {
     "name": "Ditmars Blvd & 48 St",
@@ -8315,6 +8596,14 @@
     "neighborhood": "East Elmhurst"
   },
   {
+    "name": "Ditmas Ave & McDonald Ave",
+    "aliases": [],
+    "latitude": 40.63548,
+    "longitude": -73.97825,
+    "borough": "Brooklyn",
+    "neighborhood": "Borough Park"
+  },
+  {
     "name": "Division Ave & Hooper St",
     "aliases": [
       "Division Av & Hooper St"
@@ -8337,8 +8626,8 @@
     "aliases": [
       "Division St & Bowery (old)"
     ],
-    "latitude": 40.71413089,
-    "longitude": -73.9970468,
+    "latitude": 40.714130945,
+    "longitude": -73.9970469,
     "borough": "Manhattan",
     "neighborhood": "Chinatown"
   },
@@ -8667,14 +8956,6 @@
     "neighborhood": "East Harlem"
   },
   {
-    "name": "E 117 St & 1 Ave",
-    "aliases": [],
-    "latitude": 40.79656826080296,
-    "longitude": -73.93459528684616,
-    "borough": "Manhattan",
-    "neighborhood": "East Harlem"
-  },
-  {
     "name": "E 118 St & 3 Ave",
     "aliases": [],
     "latitude": 40.799139,
@@ -8760,8 +9041,8 @@
       "E 13 St & Avenue A",
       "old - E 13 St & Avenue A"
     ],
-    "latitude": 40.72959150464326,
-    "longitude": -73.98060821367851,
+    "latitude": 40.72962930130993,
+    "longitude": -73.98064371701184,
     "borough": "Manhattan",
     "neighborhood": "East Village"
   },
@@ -9177,9 +9458,11 @@
   },
   {
     "name": "E 170 St & Webster Ave",
-    "aliases": [],
-    "latitude": 40.83617913677475,
-    "longitude": -73.90730146322765,
+    "aliases": [
+      "E 170 St & Webster Ave_old"
+    ],
+    "latitude": 40.83614106838738,
+    "longitude": -73.90725023161383,
     "borough": "Bronx",
     "neighborhood": "Claremont Village"
   },
@@ -9372,6 +9655,14 @@
     "aliases": [],
     "latitude": 40.8601,
     "longitude": -73.8866,
+    "borough": "Bronx",
+    "neighborhood": "Fordham"
+  },
+  {
+    "name": "E 196 St & Valentine Ave",
+    "aliases": [],
+    "latitude": 40.86744,
+    "longitude": -73.89198,
     "borough": "Bronx",
     "neighborhood": "Fordham"
   },
@@ -9668,7 +9959,7 @@
   {
     "name": "E 39 St & Lexington Ave",
     "aliases": [],
-    "latitude": 40.749498546025194,
+    "latitude": 40.7494985460252,
     "longitude": -73.97729203113158,
     "borough": "Manhattan",
     "neighborhood": "Murray Hill"
@@ -9700,6 +9991,14 @@
     "neighborhood": "Midtown"
   },
   {
+    "name": "E 40 St & Madison Ave",
+    "aliases": [],
+    "latitude": 40.75159368451112,
+    "longitude": -73.98043155670166,
+    "borough": "Manhattan",
+    "neighborhood": "Midtown"
+  },
+  {
     "name": "E 40 St & Park Ave",
     "aliases": [
       "Park Ave & E 40 St"
@@ -9723,8 +10022,16 @@
       "E 41 St & Madison Ave (SW corner)",
       "E 41 St & Madison Ave"
     ],
-    "latitude": 40.752126426873986,
-    "longitude": -73.97982631232959,
+    "latitude": 40.75212652041464,
+    "longitude": -73.97982629132588,
+    "borough": "Manhattan",
+    "neighborhood": "Midtown"
+  },
+  {
+    "name": "E 42 St & Vanderbilt Ave",
+    "aliases": [],
+    "latitude": 40.752416,
+    "longitude": -73.97837,
     "borough": "Manhattan",
     "neighborhood": "Midtown"
   },
@@ -10093,6 +10400,14 @@
     "neighborhood": "Upper East Side"
   },
   {
+    "name": "E 61 St & Park Ave",
+    "aliases": [],
+    "latitude": 40.76421007169064,
+    "longitude": -73.96910458803177,
+    "borough": "Manhattan",
+    "neighborhood": "Upper East Side"
+  },
+  {
     "name": "E 63 St & 3 Ave",
     "aliases": [],
     "latitude": 40.763954,
@@ -10113,6 +10428,14 @@
     "aliases": [],
     "latitude": 40.76800889305947,
     "longitude": -73.96845281124115,
+    "borough": "Manhattan",
+    "neighborhood": "Upper East Side"
+  },
+  {
+    "name": "E 67 St & Lexington Ave",
+    "aliases": [],
+    "latitude": 40.76734259143217,
+    "longitude": -73.9648586511612,
     "borough": "Manhattan",
     "neighborhood": "Upper East Side"
   },
@@ -10184,9 +10507,11 @@
   },
   {
     "name": "E 72 St & Park Ave",
-    "aliases": [],
-    "latitude": 40.77118287540658,
-    "longitude": -73.96409422159195,
+    "aliases": [
+      "Mobile 01"
+    ],
+    "latitude": 40.77111736591094,
+    "longitude": -73.96421626210213,
     "borough": "Manhattan",
     "neighborhood": "Upper East Side"
   },
@@ -10239,10 +10564,10 @@
     "neighborhood": "Upper East Side"
   },
   {
-    "name": "E 78 St & 2 Ave",
+    "name": "E 77 St & Park Ave",
     "aliases": [],
-    "latitude": 40.7727966,
-    "longitude": -73.95577801,
+    "latitude": 40.774405455003,
+    "longitude": -73.96175265312193,
     "borough": "Manhattan",
     "neighborhood": "Upper East Side"
   },
@@ -10271,25 +10596,9 @@
     "neighborhood": "Upper East Side"
   },
   {
-    "name": "E 80 St & Park Ave",
-    "aliases": [],
-    "latitude": 40.776173,
-    "longitude": -73.959757,
-    "borough": "Manhattan",
-    "neighborhood": "Upper East Side"
-  },
-  {
-    "name": "E 81 St & 1 Ave",
-    "aliases": [],
-    "latitude": 40.77377781072322,
-    "longitude": -73.95197331905365,
-    "borough": "Manhattan",
-    "neighborhood": "Upper East Side"
-  },
-  {
     "name": "E 81 St & 2 Ave",
     "aliases": [],
-    "latitude": 40.77477944895728,
+    "latitude": 40.774779448957275,
     "longitude": -73.95427465438843,
     "borough": "Manhattan",
     "neighborhood": "Upper East Side"
@@ -10311,6 +10620,14 @@
     "neighborhood": "Upper East Side"
   },
   {
+    "name": "E 82 St & 2 Ave",
+    "aliases": [],
+    "latitude": 40.77517793,
+    "longitude": -73.95324922,
+    "borough": "Manhattan",
+    "neighborhood": "Upper East Side"
+  },
+  {
     "name": "E 82 St & East End Ave",
     "aliases": [],
     "latitude": 40.7724607,
@@ -10323,14 +10640,6 @@
     "aliases": [],
     "latitude": 40.77565541,
     "longitude": -73.95068615,
-    "borough": "Manhattan",
-    "neighborhood": "Upper East Side"
-  },
-  {
-    "name": "E 84 St & 3 Ave",
-    "aliases": [],
-    "latitude": 40.77755374298887,
-    "longitude": -73.95512759685516,
     "borough": "Manhattan",
     "neighborhood": "Upper East Side"
   },
@@ -10353,7 +10662,7 @@
   {
     "name": "E 85 St & East End Ave",
     "aliases": [],
-    "latitude": 40.774318113273914,
+    "latitude": 40.77431811327392,
     "longitude": -73.94548773765564,
     "borough": "Manhattan",
     "neighborhood": "Upper East Side"
@@ -10427,8 +10736,8 @@
   {
     "name": "E 91 St & 2 Ave",
     "aliases": [],
-    "latitude": 40.78112229934166,
-    "longitude": -73.94965589046478,
+    "latitude": 40.78115276427915,
+    "longitude": -73.94963040947914,
     "borough": "Manhattan",
     "neighborhood": "Upper East Side"
   },
@@ -10959,10 +11268,13 @@
     "name": "Morgan Tech Shop parts testing",
     "aliases": [
       "Morgan WH station",
-      "Forrest portable kiosk"
+      "Forrest WH station",
+      "Forrest portable kiosk",
+      "Forrest Tech Shop ?",
+      "Forrest Tech Shop parts testing"
     ],
-    "latitude": 40.703191157327495,
-    "longitude": -73.93188975151793,
+    "latitude": 40.703184194296405,
+    "longitude": -73.93190186747672,
     "borough": "Brooklyn",
     "neighborhood": "Bushwick"
   },
@@ -10992,6 +11304,30 @@
     "longitude": -73.99422366,
     "borough": "Manhattan",
     "neighborhood": "Chinatown"
+  },
+  {
+    "name": "Fort Hamilton Pkwy & 85 St",
+    "aliases": [],
+    "latitude": 40.62095,
+    "longitude": -74.02388,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
+  },
+  {
+    "name": "Fort Hamilton Pkwy & 92 St",
+    "aliases": [],
+    "latitude": 40.61717,
+    "longitude": -74.02744,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
+  },
+  {
+    "name": "Fort Hamilton Pkwy & 95 St",
+    "aliases": [],
+    "latitude": 40.61466,
+    "longitude": -74.02946,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
   },
   {
     "name": "Fort Hamilton Pkwy & E 2 St",
@@ -11356,7 +11692,7 @@
   {
     "name": "Fulton St & Waverly Ave",
     "aliases": [],
-    "latitude": 40.683238654603414,
+    "latitude": 40.68323865460341,
     "longitude": -73.96599590778351,
     "borough": "Brooklyn",
     "neighborhood": "Clinton Hill"
@@ -11388,16 +11724,18 @@
   {
     "name": "Gansevoort St & Hudson St",
     "aliases": [],
-    "latitude": 40.73944820130404,
+    "latitude": 40.739448201304036,
     "longitude": -74.00507032871246,
     "borough": "Manhattan",
     "neighborhood": "West Village"
   },
   {
     "name": "Garfield Light Rail",
-    "aliases": [],
-    "latitude": 40.710526,
-    "longitude": -74.070112,
+    "aliases": [
+      "Garfield Ave Station"
+    ],
+    "latitude": 40.710496511689854,
+    "longitude": -74.0700753977356,
     "borough": "New Jersey",
     "neighborhood": "Jersey City"
   },
@@ -11629,9 +11967,11 @@
   },
   {
     "name": "Grand Concourse & E 144 St",
-    "aliases": [],
-    "latitude": 40.816576,
-    "longitude": -73.927987,
+    "aliases": [
+      "Grand Concourse & E 144  St"
+    ],
+    "latitude": 40.81672319733016,
+    "longitude": -73.92798599136448,
     "borough": "Bronx",
     "neighborhood": "Mott Haven"
   },
@@ -11832,6 +12172,14 @@
     "neighborhood": "Lower East Side"
   },
   {
+    "name": "Grant Ave & E 164 St",
+    "aliases": [],
+    "latitude": 40.828847,
+    "longitude": -73.91769,
+    "borough": "Bronx",
+    "neighborhood": "Concourse Village"
+  },
+  {
     "name": "Grant Ave & E 169 St",
     "aliases": [],
     "latitude": 40.83579,
@@ -12030,9 +12378,11 @@
   },
   {
     "name": "Grove St PATH",
-    "aliases": [],
-    "latitude": 40.71941,
-    "longitude": -74.04309,
+    "aliases": [
+      "Grove St - PATH"
+    ],
+    "latitude": 40.71949805823583,
+    "longitude": -74.04310373179436,
     "borough": "New Jersey",
     "neighborhood": "Jersey City"
   },
@@ -12133,6 +12483,14 @@
     "neighborhood": "Downtown Brooklyn"
   },
   {
+    "name": "Hanson Pl & St Felix St",
+    "aliases": [],
+    "latitude": 40.685159599891776,
+    "longitude": -73.97711366415024,
+    "borough": "Brooklyn",
+    "neighborhood": "Fort Greene"
+  },
+  {
     "name": "Harborside",
     "aliases": [],
     "latitude": 40.7192517,
@@ -12223,8 +12581,8 @@
   {
     "name": "Henry St & Grand St",
     "aliases": [],
-    "latitude": 40.714215,
-    "longitude": -73.981346,
+    "latitude": 40.714211,
+    "longitude": -73.981095,
     "borough": "Manhattan",
     "neighborhood": "Lower East Side"
   },
@@ -12359,9 +12717,11 @@
   },
   {
     "name": "Hudson Blvd W & W 36 St",
-    "aliases": [],
-    "latitude": 40.75676475086503,
-    "longitude": -73.99971440439913,
+    "aliases": [
+      "Hudson Blvd E & W 36 St"
+    ],
+    "latitude": 40.75653552012286,
+    "longitude": -73.99961292750504,
     "borough": "Manhattan",
     "neighborhood": "Hell's Kitchen"
   },
@@ -12444,6 +12804,16 @@
     "neighborhood": "Randall's Island"
   },
   {
+    "name": "India St Pier",
+    "aliases": [
+      "India St & East River"
+    ],
+    "latitude": 40.73169309794173,
+    "longitude": -73.96142896512966,
+    "borough": "Brooklyn",
+    "neighborhood": "Greenpoint"
+  },
+  {
     "name": "India St & Manhattan Ave",
     "aliases": [],
     "latitude": 40.73232194,
@@ -12456,14 +12826,6 @@
     "aliases": [],
     "latitude": 40.73181401720966,
     "longitude": -73.95995020866394,
-    "borough": "Brooklyn",
-    "neighborhood": "Greenpoint"
-  },
-  {
-    "name": "India St Pier",
-    "aliases": [],
-    "latitude": 40.731734785883454,
-    "longitude": -73.9612390102593,
     "borough": "Brooklyn",
     "neighborhood": "Greenpoint"
   },
@@ -12558,8 +12920,8 @@
   {
     "name": "JC Medical Center",
     "aliases": [],
-    "latitude": 40.71539114317,
-    "longitude": -74.04969155788422,
+    "latitude": 40.71653978099194,
+    "longitude": -74.0496379137039,
     "borough": "New Jersey",
     "neighborhood": "Jersey City"
   },
@@ -12605,9 +12967,11 @@
   },
   {
     "name": "Jackson Square",
-    "aliases": [],
-    "latitude": 40.71113,
-    "longitude": -74.0789,
+    "aliases": [
+      "MLK Light Rail"
+    ],
+    "latitude": 40.71113025,
+    "longitude": -74.07889275,
     "borough": "New Jersey",
     "neighborhood": "Jersey City"
   },
@@ -12784,14 +13148,6 @@
     "neighborhood": "Financial District"
   },
   {
-    "name": "Johnson St & Brooklyn Bridge Blvd",
-    "aliases": [],
-    "latitude": 40.695,
-    "longitude": -73.98917,
-    "borough": "Brooklyn",
-    "neighborhood": "Downtown Brooklyn"
-  },
-  {
     "name": "Johnson St & Gold St",
     "aliases": [],
     "latitude": 40.69474881,
@@ -12865,9 +13221,11 @@
   },
   {
     "name": "Kent Ave & N 7 St",
-    "aliases": [],
-    "latitude": 40.72036775298455,
-    "longitude": -73.96165072917938,
+    "aliases": [
+      "KentAve&N7 St"
+    ],
+    "latitude": 40.72047216649227,
+    "longitude": -73.96157648958969,
     "borough": "Brooklyn",
     "neighborhood": "Williamsburg"
   },
@@ -12950,6 +13308,14 @@
     "longitude": -73.94191,
     "borough": "Brooklyn",
     "neighborhood": "Crown Heights"
+  },
+  {
+    "name": "Kiosk in a box Deployment",
+    "aliases": [],
+    "latitude": 40.70861098096821,
+    "longitude": -73.92850399017334,
+    "borough": "Brooklyn",
+    "neighborhood": "Williamsburg"
   },
   {
     "name": "Pier 40 X2",
@@ -13038,10 +13404,11 @@
     "name": "Lab - NYC - M",
     "aliases": [
       "W 35 St & 9 Ave",
-      "Lab - NYC"
+      "Lab - NYC",
+      "Prototype Lab"
     ],
-    "latitude": 40.75412186421173,
-    "longitude": -73.9963402506087,
+    "latitude": 40.75410159040692,
+    "longitude": -73.9963765635047,
     "borough": "Manhattan",
     "neighborhood": "Hell's Kitchen"
   },
@@ -13125,8 +13492,8 @@
       "Lafayette St & Jersey St S",
       "Lafayette St & Jersey St N"
     ],
-    "latitude": 40.72439047833555,
-    "longitude": -73.99589086110677,
+    "latitude": 40.72447559333333,
+    "longitude": -73.99577195333335,
     "borough": "Manhattan",
     "neighborhood": "Nolita"
   },
@@ -13275,10 +13642,34 @@
     "neighborhood": "Williamsburg"
   },
   {
+    "name": "Leonard St & Grand St",
+    "aliases": [],
+    "latitude": 40.71103537,
+    "longitude": -73.94714303,
+    "borough": "Brooklyn",
+    "neighborhood": "Williamsburg"
+  },
+  {
+    "name": "Leonard St & Manhattan Ave",
+    "aliases": [],
+    "latitude": 40.72152240339303,
+    "longitude": -73.94898265600203,
+    "borough": "Brooklyn",
+    "neighborhood": "Greenpoint"
+  },
+  {
     "name": "Leonard St & Maujer St",
     "aliases": [],
     "latitude": 40.7103685423523,
     "longitude": -73.94705951213837,
+    "borough": "Brooklyn",
+    "neighborhood": "Williamsburg"
+  },
+  {
+    "name": "Leonard St & Meeker Ave",
+    "aliases": [],
+    "latitude": 40.717318403855785,
+    "longitude": -73.94820213317871,
     "borough": "Brooklyn",
     "neighborhood": "Williamsburg"
   },
@@ -13445,8 +13836,8 @@
   {
     "name": "Liberty St & Nassau St",
     "aliases": [],
-    "latitude": 40.70858894,
-    "longitude": -74.00935482,
+    "latitude": 40.70858894240581,
+    "longitude": -74.00935482235809,
     "borough": "Manhattan",
     "neighborhood": "Financial District"
   },
@@ -13619,6 +14010,14 @@
     "neighborhood": "Central Park"
   },
   {
+    "name": "MTL-ECO5-LAB",
+    "aliases": [],
+    "latitude": 40.74716563443737,
+    "longitude": -74.08896387030836,
+    "borough": "New Jersey",
+    "neighborhood": "Hoboken"
+  },
+  {
     "name": "MacDonough St & Malcolm X Blvd",
     "aliases": [],
     "latitude": 40.68273,
@@ -13628,9 +14027,11 @@
   },
   {
     "name": "MacDonough St & Marcy Ave",
-    "aliases": [],
-    "latitude": 40.68078,
-    "longitude": -73.94613,
+    "aliases": [
+      "Marcy Ave & MacDonough St"
+    ],
+    "latitude": 40.68069884227725,
+    "longitude": -73.94618974250793,
     "borough": "Brooklyn",
     "neighborhood": "Bedford-Stuyvesant"
   },
@@ -14023,14 +14424,6 @@
     "neighborhood": "Chinatown"
   },
   {
-    "name": "Marshall St & 2 St",
-    "aliases": [],
-    "latitude": 40.740802,
-    "longitude": -74.042521,
-    "borough": "New Jersey",
-    "neighborhood": "Hoboken"
-  },
-  {
     "name": "Martense Ave & 108 St",
     "aliases": [],
     "latitude": 40.74214,
@@ -14243,22 +14636,6 @@
     "neighborhood": "Flushing Meadows Corona Park"
   },
   {
-    "name": "Midwood St & Kingston Ave",
-    "aliases": [],
-    "latitude": 40.66067,
-    "longitude": -73.94243,
-    "borough": "Brooklyn",
-    "neighborhood": "Prospect-Lefferts Gardens"
-  },
-  {
-    "name": "Midwood St & Utica Ave",
-    "aliases": [],
-    "latitude": 40.66124,
-    "longitude": -73.93164,
-    "borough": "Brooklyn",
-    "neighborhood": "East Flatbush"
-  },
-  {
     "name": "Milton St & Franklin St",
     "aliases": [],
     "latitude": 40.72906,
@@ -14416,14 +14793,6 @@
     "neighborhood": "Williamsburg"
   },
   {
-    "name": "Morgan Warehouse Monolith",
-    "aliases": [],
-    "latitude": 40.7095,
-    "longitude": -73.9329,
-    "borough": "Brooklyn",
-    "neighborhood": "Williamsburg"
-  },
-  {
     "name": "Morningside Ave & W 123 St",
     "aliases": [],
     "latitude": 40.81,
@@ -14514,6 +14883,14 @@
     "neighborhood": "West Village"
   },
   {
+    "name": "Morton St & West St",
+    "aliases": [],
+    "latitude": 40.73142106543068,
+    "longitude": -74.01077985769007,
+    "borough": "Manhattan",
+    "neighborhood": "West Village"
+  },
+  {
     "name": "Motorgate",
     "aliases": [],
     "latitude": 40.7639089,
@@ -14546,18 +14923,21 @@
     "neighborhood": "Harlem"
   },
   {
-    "name": "Murray St & Greenwich St",
-    "aliases": [],
-    "latitude": 40.71485150526252,
-    "longitude": -74.01122331619263,
+    "name": "Murray St & West St",
+    "aliases": [
+      "Murray St\t& West St",
+      "Murray St\\t& West St"
+    ],
+    "latitude": 40.7150129,
+    "longitude": -74.01264400000001,
     "borough": "Manhattan",
     "neighborhood": "Tribeca"
   },
   {
-    "name": "Murray St & West St",
+    "name": "Murray St & Greenwich St",
     "aliases": [],
-    "latitude": 40.7149787,
-    "longitude": -74.013012,
+    "latitude": 40.71485150526252,
+    "longitude": -74.01122331619263,
     "borough": "Manhattan",
     "neighborhood": "Tribeca"
   },
@@ -14706,12 +15086,30 @@
     "neighborhood": "Greenpoint"
   },
   {
+    "name": "Richardson St & N Henry St",
+    "aliases": [
+      "N Henry St & Richardson St"
+    ],
+    "latitude": 40.71914738089782,
+    "longitude": -73.94234190016479,
+    "borough": "Brooklyn",
+    "neighborhood": "Williamsburg"
+  },
+  {
     "name": "N Portland Ave & Flushing Ave",
     "aliases": [],
     "latitude": 40.697926,
     "longitude": -73.97663,
     "borough": "Brooklyn",
     "neighborhood": "Fort Greene"
+  },
+  {
+    "name": "NJCU",
+    "aliases": [],
+    "latitude": 40.7101087,
+    "longitude": -74.0858489,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
   },
   {
     "name": "NULL",
@@ -14722,6 +15120,16 @@
     "neighborhood": "Belmont"
   },
   {
+    "name": "NYCBS DEPOT - PITT",
+    "aliases": [
+      "NYCBS Depot - PIT"
+    ],
+    "latitude": 40.71689389022983,
+    "longitude": -73.98379648107529,
+    "borough": "Manhattan",
+    "neighborhood": "Lower East Side"
+  },
+  {
     "name": "NYCBS Depot - 3AV",
     "aliases": [],
     "latitude": 40.670133282374,
@@ -14730,10 +15138,25 @@
     "neighborhood": "Gowanus"
   },
   {
+    "name": "W 42 St & Dyer Ave",
+    "aliases": [
+      "StuyTown Depot",
+      "NYCBS Depot BAL - DYR",
+      "NYCBS Depot - DYR",
+      "PABT Valet"
+    ],
+    "latitude": 40.75902357661938,
+    "longitude": -73.99381345514848,
+    "borough": "Manhattan",
+    "neighborhood": "Hell's Kitchen"
+  },
+  {
     "name": "NYCBS Depot - FAR",
-    "aliases": [],
-    "latitude": 40.751483,
-    "longitude": -73.996764,
+    "aliases": [
+      "Penn Station Valet"
+    ],
+    "latitude": 40.751383298481144,
+    "longitude": -73.99684422996711,
     "borough": "Manhattan",
     "neighborhood": "Chelsea"
   },
@@ -14746,22 +15169,20 @@
     "neighborhood": "Gowanus"
   },
   {
+    "name": "NYCBS Depot - STY",
+    "aliases": [],
+    "latitude": 40.729193,
+    "longitude": -73.976655,
+    "borough": "Manhattan",
+    "neighborhood": "Stuyvesant Town"
+  },
+  {
     "name": "NYCBS Depot - STY - Garage 4",
     "aliases": [],
     "latitude": 40.7303801,
     "longitude": -73.9747502,
     "borough": "Manhattan",
     "neighborhood": "Stuyvesant Town"
-  },
-  {
-    "name": "W 42 St & Dyer Ave",
-    "aliases": [
-      "NYCBS Depot BAL - DYR"
-    ],
-    "latitude": 40.7590074480962,
-    "longitude": -73.99382919073105,
-    "borough": "Manhattan",
-    "neighborhood": "Hell's Kitchen"
   },
   {
     "name": "Nagle Ave & Ellwood St",
@@ -14806,6 +15227,7 @@
   {
     "name": "Nassau St & Duffield St",
     "aliases": [
+      "Nassau St\t& Duffield St",
       "Nassau St\\t& Duffield St"
     ],
     "latitude": 40.698477,
@@ -14852,6 +15274,14 @@
     "longitude": -73.98176059126854,
     "borough": "Brooklyn",
     "neighborhood": "Boerum Hill"
+  },
+  {
+    "name": "New Utrecht Ave & 9 Ave",
+    "aliases": [],
+    "latitude": 40.646249287052434,
+    "longitude": -73.99452600971485,
+    "borough": "Brooklyn",
+    "neighborhood": "Borough Park"
   },
   {
     "name": "New York Ave & Hawthorne St",
@@ -14966,6 +15396,14 @@
     "neighborhood": "Ridgewood"
   },
   {
+    "name": "North St",
+    "aliases": [],
+    "latitude": 40.752559,
+    "longitude": -74.044725,
+    "borough": "New Jersey",
+    "neighborhood": "Hoboken"
+  },
+  {
     "name": "Nostrand Ave & Flushing Ave",
     "aliases": [],
     "latitude": 40.69928,
@@ -14988,6 +15426,16 @@
     "longitude": -73.95041,
     "borough": "Brooklyn",
     "neighborhood": "Prospect-Lefferts Gardens"
+  },
+  {
+    "name": "Southern Blvd & E 142 St",
+    "aliases": [
+      "OLD Southern Blvd & E 142 St"
+    ],
+    "latitude": 40.807302718540996,
+    "longitude": -73.90804837199403,
+    "borough": "Bronx",
+    "neighborhood": "Mott Haven"
   },
   {
     "name": "Oakland Ave",
@@ -15024,7 +15472,7 @@
   {
     "name": "Ocean Pkwy & Church Ave",
     "aliases": [],
-    "latitude": 40.644718957635746,
+    "latitude": 40.64471895763575,
     "longitude": -73.97451460361481,
     "borough": "Brooklyn",
     "neighborhood": "Kensington"
@@ -15442,7 +15890,7 @@
     "aliases": [
       "Whitehall St & Bridge St"
     ],
-    "latitude": 40.70340285262067,
+    "latitude": 40.70340285262068,
     "longitude": -74.01317966438674,
     "borough": "Manhattan",
     "neighborhood": "Financial District"
@@ -15457,7 +15905,9 @@
   },
   {
     "name": "Peck Slip & Front St",
-    "aliases": [],
+    "aliases": [
+      "Peck Slip & Front Street"
+    ],
     "latitude": 40.707873,
     "longitude": -74.00167,
     "borough": "Manhattan",
@@ -15494,14 +15944,6 @@
     "longitude": -74.051788633,
     "borough": "New Jersey",
     "neighborhood": "Hoboken"
-  },
-  {
-    "name": "Picnic Point",
-    "aliases": [],
-    "latitude": 40.68512559515415,
-    "longitude": -74.02535319328308,
-    "borough": "New Jersey",
-    "neighborhood": "Jersey City"
   },
   {
     "name": "Pier 40 - Hudson River Park",
@@ -15594,14 +16036,6 @@
     "neighborhood": "Mount Eden"
   },
   {
-    "name": "Plaza St East & Flatbush Ave",
-    "aliases": [],
-    "latitude": 40.673134,
-    "longitude": -73.969106,
-    "borough": "Brooklyn",
-    "neighborhood": "Prospect Park"
-  },
-  {
     "name": "Plaza St West & Flatbush Ave",
     "aliases": [],
     "latitude": 40.6750207,
@@ -15675,7 +16109,9 @@
   },
   {
     "name": "Prospect Ave & E 151 St",
-    "aliases": [],
+    "aliases": [
+      "Propsect Ave & E 151 St"
+    ],
     "latitude": 40.814232,
     "longitude": -73.903927,
     "borough": "Bronx",
@@ -15938,12 +16374,21 @@
     "neighborhood": "Civic Center"
   },
   {
+    "name": "Reed St & Van Brunt St",
+    "aliases": [],
+    "latitude": 40.6747844,
+    "longitude": -74.01612847,
+    "borough": "Brooklyn",
+    "neighborhood": "Red Hook"
+  },
+  {
     "name": "Review Ave & Greenpoint Ave",
     "aliases": [
-      "Van Dam St & Greenpoint Ave"
+      "Van Dam St & Greenpoint Ave",
+      "Van Dam St & Review Ave"
     ],
-    "latitude": 40.73434121841507,
-    "longitude": -73.93783797954833,
+    "latitude": 40.73437269250824,
+    "longitude": -73.9378612580254,
     "borough": "Queens",
     "neighborhood": "Long Island City"
   },
@@ -15956,18 +16401,18 @@
     "neighborhood": "Red Hook"
   },
   {
-    "name": "Richardson St & N Henry St",
-    "aliases": [],
-    "latitude": 40.71907891179564,
-    "longitude": -73.94223690032959,
-    "borough": "Brooklyn",
-    "neighborhood": "Williamsburg"
-  },
-  {
     "name": "Ridge Blvd & 82 St",
     "aliases": [],
     "latitude": 40.62711,
     "longitude": -74.0326,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
+  },
+  {
+    "name": "Ridge Blvd & 89 St",
+    "aliases": [],
+    "latitude": 40.62194,
+    "longitude": -74.03477,
     "borough": "New Jersey",
     "neighborhood": "Jersey City"
   },
@@ -16071,7 +16516,9 @@
   },
   {
     "name": "Riverside Dr & W 72 St",
-    "aliases": [],
+    "aliases": [
+      "Riverside Dr & W 72 St "
+    ],
     "latitude": 40.78057799010334,
     "longitude": -73.98562431335449,
     "borough": "Manhattan",
@@ -16183,9 +16630,11 @@
   },
   {
     "name": "Rogers Pl & E 165 St",
-    "aliases": [],
-    "latitude": 40.82388366441761,
-    "longitude": -73.8974027708582,
+    "aliases": [
+      "Rogers Pl & E 165 St_old"
+    ],
+    "latitude": 40.823904832208804,
+    "longitude": -73.8973843854291,
     "borough": "Bronx",
     "neighborhood": "Longwood"
   },
@@ -16304,6 +16753,14 @@
     "neighborhood": "Williamsburg"
   },
   {
+    "name": "S 5th St & Kent Ave (Domino Park Movie Shoot)",
+    "aliases": [],
+    "latitude": 40.712896,
+    "longitude": -73.968224,
+    "borough": "Brooklyn",
+    "neighborhood": "Williamsburg"
+  },
+  {
     "name": "S Portland Ave & Atlantic Ave",
     "aliases": [],
     "latitude": 40.68322254161595,
@@ -16386,14 +16843,6 @@
     "neighborhood": "Crown Heights"
   },
   {
-    "name": "Schermerhorn St & Court St",
-    "aliases": [],
-    "latitude": 40.69102925677968,
-    "longitude": -73.99183362722397,
-    "borough": "Brooklyn",
-    "neighborhood": "Brooklyn Heights"
-  },
-  {
     "name": "Schermerhorn St & Hoyt St",
     "aliases": [],
     "latitude": 40.6886263,
@@ -16428,7 +16877,7 @@
   {
     "name": "Seaman Ave & Isham St",
     "aliases": [],
-    "latitude": 40.869898661940454,
+    "latitude": 40.86989866194045,
     "longitude": -73.92076313495636,
     "borough": "Manhattan",
     "neighborhood": "Inwood"
@@ -16485,7 +16934,9 @@
   },
   {
     "name": "Sedgwick Ave & W Tremont Ave",
-    "aliases": [],
+    "aliases": [
+      "Sedgwick Ave & W Tremont Ave - new"
+    ],
     "latitude": 40.85304455868985,
     "longitude": -73.91830623149872,
     "borough": "Bronx",
@@ -16525,9 +16976,11 @@
   },
   {
     "name": "Sharon St & Olive St",
-    "aliases": [],
-    "latitude": 40.715341620424475,
-    "longitude": -73.93865078687668,
+    "aliases": [
+      "Sharon St & Olive St_new"
+    ],
+    "latitude": 40.71534731021224,
+    "longitude": -73.93860539343834,
     "borough": "Brooklyn",
     "neighborhood": "Williamsburg"
   },
@@ -16598,6 +17051,14 @@
     "neighborhood": "Jersey City"
   },
   {
+    "name": "Shore Rd & 4 Ave",
+    "aliases": [],
+    "latitude": 40.6115,
+    "longitude": -74.03513,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
+  },
+  {
     "name": "Shore Rd & 74 St",
     "aliases": [],
     "latitude": 40.63414,
@@ -16614,6 +17075,30 @@
     "neighborhood": "Jersey City"
   },
   {
+    "name": "Shore Rd & 86 St",
+    "aliases": [],
+    "latitude": 40.62561,
+    "longitude": -74.04079,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
+  },
+  {
+    "name": "Shore Rd & 97 St",
+    "aliases": [],
+    "latitude": 40.61529,
+    "longitude": -74.03779,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
+  },
+  {
+    "name": "Shore Rd & Oliver St",
+    "aliases": [],
+    "latitude": 40.61919,
+    "longitude": -74.0402,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
+  },
+  {
     "name": "Sigourney St & Columbia St",
     "aliases": [],
     "latitude": 40.67267243410948,
@@ -16623,7 +17108,9 @@
   },
   {
     "name": "Skillman Ave & 43 Ave",
-    "aliases": [],
+    "aliases": [
+      "Skillman Ave & 32 Pl"
+    ],
     "latitude": 40.74653761978055,
     "longitude": -73.93215849995613,
     "borough": "Queens",
@@ -16774,14 +17261,6 @@
     "longitude": -73.901583,
     "borough": "Bronx",
     "neighborhood": "Longwood"
-  },
-  {
-    "name": "Southern Blvd & E 142 St",
-    "aliases": [],
-    "latitude": 40.807347437082,
-    "longitude": -73.90809774398804,
-    "borough": "Bronx",
-    "neighborhood": "Mott Haven"
   },
   {
     "name": "Southern Blvd & E 149 St",
@@ -17024,10 +17503,10 @@
   {
     "name": "St Marks Pl & 4 Ave",
     "aliases": [],
-    "latitude": 40.68197,
-    "longitude": -73.98034,
+    "latitude": 40.68177810928762,
+    "longitude": -73.97988975048065,
     "borough": "Brooklyn",
-    "neighborhood": "Gowanus"
+    "neighborhood": "Park Slope"
   },
   {
     "name": "St Mary's St & Jackson Ave",
@@ -17174,6 +17653,14 @@
     "longitude": -73.98912867,
     "borough": "Brooklyn",
     "neighborhood": "Boerum Hill"
+  },
+  {
+    "name": "Station demo",
+    "aliases": [],
+    "latitude": 40.60401734884197,
+    "longitude": -74.01970893231919,
+    "borough": "Brooklyn",
+    "neighborhood": "Dyker Heights"
   },
   {
     "name": "Steinway St & 19 Ave",
@@ -17404,8 +17891,8 @@
   {
     "name": "Sullivan Pl & Franklin Ave",
     "aliases": [],
-    "latitude": 40.66408,
-    "longitude": -73.960251,
+    "latitude": 40.66407983678161,
+    "longitude": -73.96025128666679,
     "borough": "Brooklyn",
     "neighborhood": "Crown Heights"
   },
@@ -17598,6 +18085,14 @@
     "neighborhood": "Crown Heights"
   },
   {
+    "name": "Troy Ave & Sterling Pl",
+    "aliases": [],
+    "latitude": 40.67195,
+    "longitude": -73.93651,
+    "borough": "Brooklyn",
+    "neighborhood": "Crown Heights"
+  },
+  {
     "name": "Turner Pl & Coney Island Ave",
     "aliases": [],
     "latitude": 40.64521,
@@ -17743,9 +18238,7 @@
   },
   {
     "name": "University Pl & E 14 St",
-    "aliases": [
-      "University Pl & E 14 St (old)"
-    ],
+    "aliases": [],
     "latitude": 40.73492695,
     "longitude": -73.99200509,
     "borough": "Manhattan",
@@ -18155,7 +18648,9 @@
   },
   {
     "name": "W 135 St & Lenox Terrace Pl",
-    "aliases": [],
+    "aliases": [
+      "West 135 St & Lenox Terrace Pl"
+    ],
     "latitude": 40.813619,
     "longitude": -73.939336,
     "borough": "Manhattan",
@@ -18754,6 +19249,14 @@
     "neighborhood": "Midtown"
   },
   {
+    "name": "W 38 St & 9 Ave",
+    "aliases": [],
+    "latitude": 40.75561113529378,
+    "longitude": -73.99373665452003,
+    "borough": "Manhattan",
+    "neighborhood": "Hell's Kitchen"
+  },
+  {
     "name": "W 4 St & 7 Ave S",
     "aliases": [],
     "latitude": 40.73401143,
@@ -18763,7 +19266,9 @@
   },
   {
     "name": "W 40 St & 7 Ave",
-    "aliases": [],
+    "aliases": [
+      "W 40 St & 8 Ave"
+    ],
     "latitude": 40.754818,
     "longitude": -73.988154,
     "borough": "Manhattan",
@@ -18870,8 +19375,8 @@
     "aliases": [
       "W 48 St & Rockefeller Plaza"
     ],
-    "latitude": 40.757852677241544,
-    "longitude": -73.97944865003967,
+    "latitude": 40.75785290845991,
+    "longitude": -73.9794485270977,
     "borough": "Manhattan",
     "neighborhood": "Midtown"
   },
@@ -18894,7 +19399,7 @@
   {
     "name": "W 50 St & 10 Ave",
     "aliases": [],
-    "latitude": 40.764734200065185,
+    "latitude": 40.76473420006519,
     "longitude": -73.99194359779358,
     "borough": "Manhattan",
     "neighborhood": "Hell's Kitchen"
@@ -18902,7 +19407,7 @@
   {
     "name": "W 50 St & 9 Ave",
     "aliases": [],
-    "latitude": 40.763604677958625,
+    "latitude": 40.76360467795863,
     "longitude": -73.98917958140373,
     "borough": "Manhattan",
     "neighborhood": "Hell's Kitchen"
@@ -18998,8 +19503,8 @@
   {
     "name": "W 55 St & 6 Ave",
     "aliases": [],
-    "latitude": 40.76309387270797,
-    "longitude": -73.9783501625061,
+    "latitude": 40.763189,
+    "longitude": -73.978434,
     "borough": "Manhattan",
     "neighborhood": "Midtown"
   },
@@ -19125,7 +19630,9 @@
   },
   {
     "name": "W 87 St & Amsterdam Ave",
-    "aliases": [],
+    "aliases": [
+      "W 87 St  & Amsterdam Ave"
+    ],
     "latitude": 40.78839,
     "longitude": -73.9747,
     "borough": "Manhattan",
@@ -19192,8 +19699,8 @@
     "aliases": [
       "W Broadway & Spring Street"
     ],
-    "latitude": 40.72494672359416,
-    "longitude": -74.00165855884552,
+    "latitude": 40.72492828679708,
+    "longitude": -74.00160278942276,
     "borough": "Manhattan",
     "neighborhood": "SoHo"
   },
@@ -19320,6 +19827,14 @@
     "neighborhood": "Chinatown"
   },
   {
+    "name": "Wall St & South St",
+    "aliases": [],
+    "latitude": 40.70437,
+    "longitude": -74.00637,
+    "borough": "Manhattan",
+    "neighborhood": "Financial District"
+  },
+  {
     "name": "Wallabout St & Kent Ave",
     "aliases": [],
     "latitude": 40.6991049,
@@ -19428,7 +19943,7 @@
   {
     "name": "Warren St & Smith St",
     "aliases": [],
-    "latitude": 40.685424009970184,
+    "latitude": 40.68542400997018,
     "longitude": -73.99127773940563,
     "borough": "Brooklyn",
     "neighborhood": "Carroll Gardens"
@@ -19716,6 +20231,14 @@
     "neighborhood": "Jersey City"
   },
   {
+    "name": "West Side Light Rail",
+    "aliases": [],
+    "latitude": 40.714402,
+    "longitude": -74.0887723,
+    "borough": "New Jersey",
+    "neighborhood": "Jersey City"
+  },
+  {
     "name": "West St & Chambers St",
     "aliases": [],
     "latitude": 40.71754834,
@@ -19956,6 +20479,14 @@
     "neighborhood": "Windsor Terrace"
   },
   {
+    "name": "Winthrop St & Albany Ave",
+    "aliases": [],
+    "latitude": 40.6577,
+    "longitude": -73.9398,
+    "borough": "Brooklyn",
+    "neighborhood": "Prospect-Lefferts Gardens"
+  },
+  {
     "name": "Winthrop St & Nostrand Ave",
     "aliases": [],
     "latitude": 40.65707,
@@ -19986,14 +20517,6 @@
     "longitude": -73.94051,
     "borough": "Brooklyn",
     "neighborhood": "Williamsburg"
-  },
-  {
-    "name": "Wolcott St & Dwight St",
-    "aliases": [],
-    "latitude": 40.6753274,
-    "longitude": -74.0100698,
-    "borough": "Brooklyn",
-    "neighborhood": "Red Hook"
   },
   {
     "name": "Woodhaven Blvd & Hoffman Dr",
@@ -20090,8 +20613,8 @@
   {
     "name": "Wyckoff St & Bond St",
     "aliases": [],
-    "latitude": 40.68461653897949,
-    "longitude": -73.98721285164356,
+    "latitude": 40.684617,
+    "longitude": -73.987213,
     "borough": "Brooklyn",
     "neighborhood": "Gowanus"
   },
@@ -20121,9 +20644,11 @@
   },
   {
     "name": "Yankee Ferry Terminal",
-    "aliases": [],
-    "latitude": 40.686931,
-    "longitude": -74.016966,
+    "aliases": [
+      "Yankee Ferry Terminal (old)"
+    ],
+    "latitude": 40.68699839937956,
+    "longitude": -74.01686092560833,
     "borough": "Manhattan",
     "neighborhood": "Governors Island"
   },

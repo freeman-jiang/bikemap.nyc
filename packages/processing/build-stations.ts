@@ -5,7 +5,7 @@ import { point } from "@turf/helpers";
 import fs from "fs";
 import type { Feature, FeatureCollection, Polygon } from "geojson";
 import path from "path";
-import { dataDir, gitRoot } from "./utils";
+import { csvGlob, dataDir, gitRoot, NYC_BOUNDS } from "./utils";
 
 // Derive station data from raw CSV files + geocode with neighborhood boundaries.
 // Clusters stations from ALL years by coordinates to create a unified station list
@@ -18,19 +18,8 @@ import { dataDir, gitRoot } from "./utils";
 // Output:
 // - apps/client/public/stations.json
 
-// Glob for ALL years (legacy uses spaces in columns, modern uses underscores)
-const allYearsCsvGlob = path.join(dataDir, "**/*.csv");
-
 // Distance threshold for clustering stations at same physical location
 const CLUSTER_THRESHOLD_METERS = 60;
-
-// NYC bounding box (same as build-parquet.ts) - filters out invalid/test stations
-const NYC_BOUNDS = {
-  minLat: 40.3,
-  maxLat: 41.2,
-  minLng: -74.5,
-  maxLng: -73.5,
-};
 
 type NeighborhoodProperties = {
   neighborhood: string;
@@ -197,7 +186,7 @@ async function main() {
   );
 
   console.log("Building stations.json from ALL CSV files (with aliases)...");
-  console.log(`CSV glob: ${allYearsCsvGlob}`);
+  console.log(`CSV glob: ${csvGlob}`);
   console.log(`GeoJSON: ${geoJsonPath}`);
   console.log(`Output: ${stationsPath}`);
 
@@ -213,60 +202,146 @@ async function main() {
   const connection = await DuckDBConnection.create();
 
   // Extract all unique stations from ALL years
-  // Handles both legacy schema (spaces in column names) and modern schema (underscores)
-  // Uses union_by_name=true to merge different schemas
-  console.log("\nExtracting stations from all years...");
+  // Single CSV scan with union_by_name=true to merge both legacy and modern schemas
+  console.log("\nLoading all CSVs (single scan)...");
+  await connection.run(`
+    CREATE TEMP TABLE raw_trips AS
+    SELECT
+      -- Modern columns
+      start_station_name,
+      end_station_name,
+      start_lat,
+      start_lng,
+      end_lat,
+      end_lng,
+      started_at,
+      ended_at,
+      -- Legacy columns (with spaces)
+      "start station name",
+      "end station name",
+      "start station latitude",
+      "start station longitude",
+      "end station latitude",
+      "end station longitude",
+      starttime,
+      stoptime
+    FROM read_csv_auto('${csvGlob}', union_by_name=true)
+  `);
+
+  // Validate data quality before processing
+  console.log("Validating data...");
+  const validationReader = await connection.runAndReadAll(`
+    SELECT
+      COUNT(*) as total_rows,
+
+      -- Modern schema issues (has station name but missing/bad coords or timestamp)
+      COUNT(*) FILTER (WHERE start_station_name IS NOT NULL AND TRY_CAST(start_lat AS DOUBLE) IS NULL) as null_modern_start_lat,
+      COUNT(*) FILTER (WHERE start_station_name IS NOT NULL AND TRY_CAST(start_lng AS DOUBLE) IS NULL) as null_modern_start_lng,
+      COUNT(*) FILTER (WHERE end_station_name IS NOT NULL AND TRY_CAST(end_lat AS DOUBLE) IS NULL) as null_modern_end_lat,
+      COUNT(*) FILTER (WHERE end_station_name IS NOT NULL AND TRY_CAST(end_lng AS DOUBLE) IS NULL) as null_modern_end_lng,
+      COUNT(*) FILTER (WHERE start_station_name IS NOT NULL AND TRY_CAST(started_at AS TIMESTAMP) IS NULL) as unparseable_started_at,
+      COUNT(*) FILTER (WHERE end_station_name IS NOT NULL AND TRY_CAST(ended_at AS TIMESTAMP) IS NULL) as unparseable_ended_at,
+
+      -- Legacy schema issues
+      COUNT(*) FILTER (WHERE "start station name" IS NOT NULL AND TRY_CAST("start station latitude" AS DOUBLE) IS NULL) as null_legacy_start_lat,
+      COUNT(*) FILTER (WHERE "start station name" IS NOT NULL AND TRY_CAST("start station longitude" AS DOUBLE) IS NULL) as null_legacy_start_lng,
+      COUNT(*) FILTER (WHERE "end station name" IS NOT NULL AND TRY_CAST("end station latitude" AS DOUBLE) IS NULL) as null_legacy_end_lat,
+      COUNT(*) FILTER (WHERE "end station name" IS NOT NULL AND TRY_CAST("end station longitude" AS DOUBLE) IS NULL) as null_legacy_end_lng,
+      COUNT(*) FILTER (WHERE "start station name" IS NOT NULL AND TRY_CAST(starttime AS TIMESTAMP) IS NULL) as unparseable_starttime,
+      COUNT(*) FILTER (WHERE "end station name" IS NOT NULL AND TRY_CAST(stoptime AS TIMESTAMP) IS NULL) as unparseable_stoptime
+    FROM raw_trips
+  `);
+
+  type ValidationResult = {
+    total_rows: bigint;
+    null_modern_start_lat: bigint;
+    null_modern_start_lng: bigint;
+    null_modern_end_lat: bigint;
+    null_modern_end_lng: bigint;
+    unparseable_started_at: bigint;
+    unparseable_ended_at: bigint;
+    null_legacy_start_lat: bigint;
+    null_legacy_start_lng: bigint;
+    null_legacy_end_lat: bigint;
+    null_legacy_end_lng: bigint;
+    unparseable_starttime: bigint;
+    unparseable_stoptime: bigint;
+  };
+
+  const v = validationReader.getRowObjects()[0] as ValidationResult;
+  console.log(`Total rows: ${v.total_rows}`);
+
+  const warnings: string[] = [];
+  const total = Number(v.total_rows);
+  const fmt = (count: bigint, msg: string) => {
+    const pct = ((Number(count) / total) * 100).toFixed(2);
+    return `${count} rows (${pct}%) with ${msg}`;
+  };
+
+  if (v.null_modern_start_lat > 0) warnings.push(fmt(v.null_modern_start_lat, "NULL start_lat (modern)"));
+  if (v.null_modern_start_lng > 0) warnings.push(fmt(v.null_modern_start_lng, "NULL start_lng (modern)"));
+  if (v.null_modern_end_lat > 0) warnings.push(fmt(v.null_modern_end_lat, "NULL end_lat (modern)"));
+  if (v.null_modern_end_lng > 0) warnings.push(fmt(v.null_modern_end_lng, "NULL end_lng (modern)"));
+  if (v.unparseable_started_at > 0) warnings.push(fmt(v.unparseable_started_at, "unparseable started_at (modern)"));
+  if (v.unparseable_ended_at > 0) warnings.push(fmt(v.unparseable_ended_at, "unparseable ended_at (modern)"));
+  if (v.null_legacy_start_lat > 0) warnings.push(fmt(v.null_legacy_start_lat, "NULL start_lat (legacy)"));
+  if (v.null_legacy_start_lng > 0) warnings.push(fmt(v.null_legacy_start_lng, "NULL start_lng (legacy)"));
+  if (v.null_legacy_end_lat > 0) warnings.push(fmt(v.null_legacy_end_lat, "NULL end_lat (legacy)"));
+  if (v.null_legacy_end_lng > 0) warnings.push(fmt(v.null_legacy_end_lng, "NULL end_lng (legacy)"));
+  if (v.unparseable_starttime > 0) warnings.push(fmt(v.unparseable_starttime, "unparseable starttime (legacy)"));
+  if (v.unparseable_stoptime > 0) warnings.push(fmt(v.unparseable_stoptime, "unparseable stoptime (legacy)"));
+
+  if (warnings.length > 0) {
+    console.warn(`\nValidation warnings (rows will be skipped):\n  - ${warnings.join("\n  - ")}`);
+  } else {
+    console.log("No validation issues found.");
+  }
+
+  console.log("\nExtracting stations from temp table...");
   const stationsReader = await connection.runAndReadAll(`
     WITH all_stations AS (
-      -- Modern schema (2020+): start_station_name, start_lat, etc.
+      -- Start stations (modern)
       SELECT
         start_station_name AS name,
         start_lat AS lat,
         start_lng AS lng,
-        EXTRACT(YEAR FROM started_at) AS year
-      FROM read_csv_auto('${allYearsCsvGlob}', union_by_name=true)
+        EXTRACT(YEAR FROM TRY_CAST(started_at AS TIMESTAMP)) AS year
+      FROM raw_trips
       WHERE start_station_name IS NOT NULL
-        AND TRY_CAST(start_lat AS DOUBLE) IS NOT NULL
-        AND TRY_CAST(start_lng AS DOUBLE) IS NOT NULL
 
       UNION ALL
 
+      -- End stations (modern)
       SELECT
         end_station_name AS name,
         end_lat AS lat,
         end_lng AS lng,
-        EXTRACT(YEAR FROM ended_at) AS year
-      FROM read_csv_auto('${allYearsCsvGlob}', union_by_name=true)
+        EXTRACT(YEAR FROM TRY_CAST(ended_at AS TIMESTAMP)) AS year
+      FROM raw_trips
       WHERE end_station_name IS NOT NULL
-        AND TRY_CAST(end_lat AS DOUBLE) IS NOT NULL
-        AND TRY_CAST(end_lng AS DOUBLE) IS NOT NULL
 
       UNION ALL
 
-      -- Legacy schema (2013-2019): "start station name", "start station latitude", etc.
+      -- Start stations (legacy)
       SELECT
         "start station name" AS name,
         TRY_CAST("start station latitude" AS DOUBLE) AS lat,
         TRY_CAST("start station longitude" AS DOUBLE) AS lng,
-        EXTRACT(YEAR FROM starttime) AS year
-      FROM read_csv_auto('${allYearsCsvGlob}', union_by_name=true)
+        EXTRACT(YEAR FROM TRY_CAST(starttime AS TIMESTAMP)) AS year
+      FROM raw_trips
       WHERE "start station name" IS NOT NULL
-        AND TRY_CAST("start station latitude" AS DOUBLE) IS NOT NULL
-        AND TRY_CAST("start station longitude" AS DOUBLE) IS NOT NULL
 
       UNION ALL
 
+      -- End stations (legacy)
       SELECT
         "end station name" AS name,
         TRY_CAST("end station latitude" AS DOUBLE) AS lat,
         TRY_CAST("end station longitude" AS DOUBLE) AS lng,
-        EXTRACT(YEAR FROM stoptime) AS year
-      FROM read_csv_auto('${allYearsCsvGlob}', union_by_name=true)
+        EXTRACT(YEAR FROM TRY_CAST(stoptime AS TIMESTAMP)) AS year
+      FROM raw_trips
       WHERE "end station name" IS NOT NULL
-        AND TRY_CAST("end station latitude" AS DOUBLE) IS NOT NULL
-        AND TRY_CAST("end station longitude" AS DOUBLE) IS NOT NULL
     ),
-    -- Deduplicate: for each name, get median coords
     station_summary AS (
       SELECT
         name,
@@ -277,11 +352,7 @@ async function main() {
       WHERE lat IS NOT NULL AND lng IS NOT NULL
       GROUP BY name
     )
-    SELECT
-      name,
-      latitude,
-      longitude,
-      max_year
+    SELECT name, latitude, longitude, max_year
     FROM station_summary
     ORDER BY name
   `);
