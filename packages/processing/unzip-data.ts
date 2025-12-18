@@ -4,10 +4,51 @@
 // Handles nested zips (e.g., yearly archives containing monthly zips)
 // by looping until no more zip files are found.
 
-import { execSync } from "child_process";
-import { readdir, stat } from "node:fs/promises";
+import { exec } from "child_process";
+import { readdir, rm, stat } from "node:fs/promises";
+import os from "os";
 import path from "path";
+import { promisify } from "util";
 import { dataDir } from "./utils";
+
+const execAsync = promisify(exec);
+const CONCURRENCY = os.cpus().length;
+
+// Clean up macOS metadata directories and files recursively
+async function cleanupMacOSMetadata(dir: string): Promise<number> {
+  let removed = 0;
+
+  try {
+    const entries = await readdir(dir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+
+      // Remove __MACOSX directories
+      if (entry.name === "__MACOSX" && entry.isDirectory()) {
+        await rm(fullPath, { recursive: true, force: true });
+        removed++;
+        continue;
+      }
+
+      // Remove ._ files (macOS resource forks)
+      if (entry.name.startsWith("._") && entry.isFile()) {
+        await rm(fullPath, { force: true });
+        removed++;
+        continue;
+      }
+
+      // Recurse into subdirectories
+      if (entry.isDirectory()) {
+        removed += await cleanupMacOSMetadata(fullPath);
+      }
+    }
+  } catch {
+    // Directory doesn't exist or not accessible
+  }
+
+  return removed;
+}
 
 async function findZipFiles(dir: string): Promise<string[]> {
   const zips: string[] = [];
@@ -39,14 +80,27 @@ async function findZipFiles(dir: string): Promise<string[]> {
   return zips;
 }
 
-function unzipFile(zipPath: string): void {
+async function unzipFile(zipPath: string): Promise<void> {
   const dir = path.dirname(zipPath);
   console.log(`  Extracting: ${path.basename(zipPath)}`);
   try {
-    execSync(`unzip -o -q "${zipPath}" -d "${dir}"`, { stdio: "pipe" });
+    await execAsync(`unzip -o -q "${zipPath}" -d "${dir}"`);
   } catch (err) {
     console.error(`  Failed to extract ${zipPath}: ${err}`);
   }
+}
+
+async function unzipAll(zips: string[]): Promise<void> {
+  let index = 0;
+
+  async function worker(): Promise<void> {
+    while (index < zips.length) {
+      const currentIndex = index++;
+      await unzipFile(zips[currentIndex]!);
+    }
+  }
+
+  await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
 }
 
 async function main() {
@@ -77,19 +131,28 @@ async function main() {
     if (zips.length === 0) break;
 
     iteration++;
-    console.log(`\nPass ${iteration}: Found ${zips.length} new zip file(s)`);
+    console.log(`\nPass ${iteration}: Found ${zips.length} new zip file(s) (concurrency: ${CONCURRENCY})`);
 
+    await unzipAll(zips);
     for (const zip of zips) {
-      unzipFile(zip);
       processedZips.add(zip);
-      totalExtracted++;
     }
+    totalExtracted += zips.length;
   }
 
   if (totalExtracted === 0) {
     console.log("\nNo zip files found.");
   } else {
     console.log(`\nDone. Extracted ${totalExtracted} zip file(s) in ${iteration} pass(es).`);
+  }
+
+  // Clean up macOS metadata files
+  console.log("\nCleaning up macOS metadata...");
+  const removedCount = await cleanupMacOSMetadata(dataDir);
+  if (removedCount > 0) {
+    console.log(`  Removed ${removedCount} __MACOSX directories and ._ files`);
+  } else {
+    console.log("  No macOS metadata found");
   }
 }
 
