@@ -4,20 +4,19 @@ Converts raw Citi Bike CSV data into optimized formats for the visualization cli
 
 ## Prerequisites
 
-- [Bun](https://bun.sh/) runtime
+- [Bun](https://bun.sh/) v1.2.9+
 - [Docker](https://www.docker.com/) (for OSRM routing server)
-- `wget` (for downloading data)
+- [AWS CLI](https://aws.amazon.com/cli/) (for downloading data from S3)
 
 ## Setup
 
 ### 1. Download Citi Bike Trip Data
 
-Download all historical trip data from [Citi Bike System Data](https://citibikenyc.com/system-data):
+Download all historical trip data from the public S3 bucket (no credentials required):
 
 ```bash
-mkdir -p data && cd data
-wget -r -np -nd -A "*.zip" https://s3.amazonaws.com/tripdata/
-cd ..
+mkdir -p data
+aws s3 sync s3://tripdata/ data/ --no-sign-request --exclude "*" --include "*.zip"
 ```
 
 This downloads ~30GB of zip files covering 2013-present.
@@ -37,7 +36,7 @@ Source: [NYC Neighborhoods Dataset](https://data.dathere.com/dataset/nyc-neighbo
 
 ### 3. Set Up OSRM Routing Server
 
-The pipeline needs a local OSRM server for bike route calculations. See [`osrm/README.md`](./osrm/README.md) for setup instructions.
+The pipeline needs a local OSRM server for bike route calculations. See [`osrm/README.md`](osrm/README.md) for setup instructions.
 
 Quick summary:
 1. Download NYC OpenStreetMap data
@@ -143,9 +142,9 @@ read_csv_auto('path/**/*.csv',
 
 ## Route Coverage
 
-| Year | Coverage | Notes |
-|------|----------|-------|
-| 2013-2019 | ~98% | Coordinate-based matching |
-| 2020+ | ~98% | Name-based matching with alias normalization |
+Trips without routes (round trips, ferry crossings) are filtered out at build time, so the parquet files contain only trips with valid route geometry.
 
-The ~2% without routes are almost entirely round trips (same start/end station).
+| Year | Notes |
+|------|-------|
+| 2013-2019 | Coordinate-based matching to nearest station |
+| 2020+ | Name-based matching with alias normalization |
