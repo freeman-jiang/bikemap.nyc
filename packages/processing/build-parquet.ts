@@ -187,7 +187,7 @@ async function main() {
   `);
   await connection.run(`
     UPDATE raw SET output_month = strftime(
-      (started_at AT TIME ZONE 'America/New_York') AT TIME ZONE 'UTC',
+      timezone('America/New_York', started_at)::TIMESTAMP,
       '%Y-%m'
     )
     WHERE started_at IS NOT NULL
@@ -363,8 +363,8 @@ async function main() {
         t.ride_id as id,
         COALESCE(snl_start.canonical_name, t.start_station_name) as startStationName,
         COALESCE(snl_end.canonical_name, t.end_station_name) as endStationName,
-        (t.started_at AT TIME ZONE 'America/New_York') AT TIME ZONE 'UTC' as startedAt,
-        (t.ended_at AT TIME ZONE 'America/New_York') AT TIME ZONE 'UTC' as endedAt,
+        timezone('America/New_York', t.started_at)::TIMESTAMP as startedAt,
+        timezone('America/New_York', t.ended_at)::TIMESTAMP as endedAt,
         t.rideable_type as bikeType,
         t.member_casual as memberCasual,
         t.start_lat as startLat,
