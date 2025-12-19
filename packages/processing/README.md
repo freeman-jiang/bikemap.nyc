@@ -6,6 +6,13 @@ Converts raw Citi Bike CSV data into optimized formats for the visualization cli
 
 - [Bun](https://bun.sh/) v1.2.9+
 - [Docker](https://www.docker.com/) (for OSRM routing server)
+- [s5cmd](https://github.com/peak/s5cmd) (fast S3 client)
+
+On Linux, ensure Docker daemon is running:
+
+```bash
+sudo systemctl start docker
+```
 
 ## Setup
 
