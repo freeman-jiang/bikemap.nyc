@@ -37,3 +37,4 @@ output/
 
 # OSRM build artifacts
 *.osrm.*
+*.osm.pbf
