@@ -91,7 +91,7 @@ class DuckDBService {
     const { db } = this.ensureInitialized();
     for (const month of months) {
       const filename = `${month}.parquet`;
-      const url = `${TRIPS_BASE_URL}/${filename}`;
+      const url = `${TRIPS_BASE_URL}/parquets/${filename}`;
       await db.registerFileURL(filename, url, duckdb.DuckDBDataProtocol.HTTP, false);
     }
   }
