@@ -16,7 +16,7 @@ export const DEFAULT_SPEEDUP = 150;
 // =============================================================================
 
 // Chunk: how often deck.gl rebuilds geometry
-export const CHUNK_SIZE_SECONDS = 60;
+export const CHUNK_SIZE_SECONDS = 60 * 1;
 
 // Batch: how often we fetch from API + worker processes trips
 export const BATCH_SIZE_SECONDS = 30 * 60; // 1 hour
