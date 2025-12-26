@@ -300,6 +300,19 @@ export const BikeMap = () => {
     loadStations();
   }, [loadStations]);
 
+  // Esc key handler: deselect selected trip
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && selectedTripId !== null) {
+        e.preventDefault();
+        selectTrip(null);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [selectedTripId, selectTrip]);
+
   const rafRef = useRef<number | null>(null);
   const lastTimestampRef = useRef<number | null>(null);
   const fpsRef = useRef<HTMLDivElement>(null);
