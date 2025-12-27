@@ -189,13 +189,13 @@ class DuckDBService {
   async getTripsFromStation(params: {
     startStationName: string;
     datetime: Date;
-    intervalSeconds: number;
+    intervalMs: number;
   }): Promise<TripWithRoute[]> {
     const { conn } = this.ensureInitialized();
-    const { startStationName, datetime, intervalSeconds } = params;
+    const { startStationName, datetime, intervalMs } = params;
 
-    const windowStart = new Date(datetime.getTime() - intervalSeconds * 1000);
-    const windowEnd = new Date(datetime.getTime() + intervalSeconds * 1000);
+    const windowStart = new Date(datetime.getTime() - intervalMs);
+    const windowEnd = new Date(datetime.getTime() + intervalMs);
 
     const months = getMonthsForRange(windowStart, windowEnd);
     await this.registerMonthlyFiles(months);
