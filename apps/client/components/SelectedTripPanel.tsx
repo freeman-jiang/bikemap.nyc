@@ -2,6 +2,7 @@ import { EBike } from "@/components/icons/Ebike";
 import { formatDistance, formatDurationMinutes } from "@/lib/format";
 import type { SelectedTripInfo } from "@/lib/stores/animation-store";
 import { Bike } from "lucide-react";
+import { Kbd } from "./ui/kbd";
 
 type SelectedTripPanelProps = {
   info: SelectedTripInfo;
@@ -29,9 +30,9 @@ export function SelectedTripPanel({ info }: SelectedTripPanelProps) {
 
       {/* Route */}
       <div className="mt-2 text-xs text-white/70">
-        <div className="break-words">{info.startStationName}</div>
+        <div className="wrap-break-words">{info.startStationName}</div>
         <div className="text-white/40 my-0.5">to</div>
-        <div className="break-words">{info.endStationName}</div>
+        <div className="wrap-break-words">{info.endStationName}</div>
       </div>
 
       {/* Stats */}
@@ -46,6 +47,12 @@ export function SelectedTripPanel({ info }: SelectedTripPanelProps) {
         </span>
         <span>{formatDurationMinutes(info.startedAt, info.endedAt)}</span>
         {info.routeDistance && <span>{formatDistance(info.routeDistance)}</span>}
+      </div>
+
+      {/* Footer hint */}
+      <div className="flex items-center gap-1 text-xs text-white/40 mt-2 pt-2 border-t border-white/5">
+        <Kbd>Esc</Kbd>
+        <span>to deselect</span>
       </div>
     </div>
   );
