@@ -335,6 +335,7 @@ export const BikeMap = () => {
   const lastTimestampRef = useRef<number | null>(null);
   const panelRef = useRef<{ fps: HTMLDivElement | null; rides: HTMLSpanElement | null }>(null);
   const smoothedFpsRef = useRef(60);
+  const visibleCountRef = useRef(0);
   const tripMapRef = useRef<Map<string, ProcessedTrip>>(new Map());
   const loadingChunksRef = useRef<Set<number>>(new Set());
   const loadedChunksRef = useRef<Set<number>>(new Set());
@@ -478,16 +479,15 @@ export const BikeMap = () => {
             panelRef.current.fps.textContent = `${Math.round(smoothedFpsRef.current)} FPS`;
           }
           if (panelRef.current?.rides) {
-            panelRef.current.rides.textContent = tripMapRef.current.size.toLocaleString();
+            panelRef.current.rides.textContent = visibleCountRef.current.toLocaleString();
           }
         });
 
         // Sample graph data at intervals
         graphSamplerRef.current.sample(() => {
           const currentSimTime = useAnimationStore.getState().currentTime;
-          const count = tripMapRef.current.size;
           setGraphData((prev) => {
-            const newPoint = { time: currentSimTime, count };
+            const newPoint = { time: currentSimTime, count: visibleCountRef.current };
             const updated = [...prev, newPoint];
             // Keep only points within rolling window
             return updated.filter((p) => currentSimTime - p.time <= GRAPH_WINDOW_SIZE_SECONDS);
@@ -692,6 +692,7 @@ export const BikeMap = () => {
 
   // Update all trip states in place - GPU handles visibility filtering via DataFilterExtension
   useMemo(() => {
+    let count = 0;
     for (const trip of activeTrips) {
       if (time < trip.visibleStartSeconds || time > trip.visibleEndSeconds) {
         trip.isVisible = false;
@@ -699,7 +700,9 @@ export const BikeMap = () => {
       }
       updateTripState(trip, time, fadeDurationSimSeconds);
       trip.isSelected = trip.id === selectedTripId;
+      count++;
     }
+    visibleCountRef.current = count;
   }, [activeTrips, time, selectedTripId, fadeDurationSimSeconds]);
 
   // Memoize selected trip data separately to avoid filtering every frame
