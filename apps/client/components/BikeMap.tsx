@@ -724,7 +724,7 @@ export const BikeMap = () => {
         getPath,
         getTimestamps,
         getColor: getTripColor,
-        opacity: hasSelection ? 0.05 : 0.2,
+        opacity: 0.2,
         widthMinPixels: 3,
         jointRounded: true,
         capRounded: true,
@@ -739,7 +739,7 @@ export const BikeMap = () => {
         id: "bike-heads",
         data: activeTrips,
         billboard: false,
-        opacity: hasSelection ? 0.1 : 0.8,
+        opacity: 0.75,
         getPosition: getBikeHeadPosition,
         getAngle: getBikeHeadAngle,
         getIcon: () => "arrow",
@@ -773,7 +773,7 @@ export const BikeMap = () => {
                 ],
               ],
               getPolygon: (d) => d,
-              getFillColor: [0, 0, 0, 70], // 50% black
+              getFillColor: [0, 0, 0, 180], 
               pickable: false,
             }),
           ]
@@ -788,7 +788,7 @@ export const BikeMap = () => {
               getColor: getSelectedPathColor,
               getWidth: 4,
               widthMinPixels: 2,
-              opacity: 1, // Alpha handled by getSelectedPathColor
+              opacity: 0.8,
               pickable: false,
               updateTriggers: {
                 getColor: [time],
