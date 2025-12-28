@@ -5,6 +5,7 @@ import { FADE_DURATION_MS } from "@/lib/config"
 import { formatDateTime, formatDateTimeFull, formatDistance, formatDurationMinutes } from "@/lib/format"
 import { useAnimationStore } from "@/lib/stores/animation-store"
 import { usePickerStore } from "@/lib/stores/location-picker-store"
+import { useSearchStore } from "@/lib/stores/search-store"
 import { useStationsStore, type Station } from "@/lib/stores/stations-store"
 import { filterTrips } from "@/lib/trip-filters"
 import { duckdbService } from "@/services/duckdb-service"
@@ -36,7 +37,7 @@ type SearchStep = "datetime" | "station" | "results"
 const MAX_RESULTS = 10
 
 export function Search() {
-  const [open, setOpen] = React.useState(false)
+  const { isOpen, open: openSearch, toggle, close } = useSearchStore()
   const [search, setSearch] = React.useState("")
 
   // Multi-step flow state
@@ -61,12 +62,12 @@ export function Search() {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
-        setOpen((open) => !open)
+        toggle()
       }
     }
     document.addEventListener("keydown", down)
     return () => document.removeEventListener("keydown", down)
-  }, [])
+  }, [toggle])
 
   React.useEffect(() => {
     loadStations()
@@ -86,14 +87,16 @@ export function Search() {
   // Re-open dialog when location is picked
   React.useEffect(() => {
     if (pickedLocation) {
-      setOpen(true)
+      openSearch()
     }
-  }, [pickedLocation])
+  }, [pickedLocation, openSearch])
 
   // Reset state when dialog closes
   const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen)
-    if (!newOpen) {
+    if (newOpen) {
+      openSearch()
+    } else {
+      close()
       setStep("datetime")
       setSelectedStation(null)
       setDatetimeInput("")
@@ -188,7 +191,7 @@ export function Search() {
   }, [trips, resultsSearch, getStation])
 
   const handlePickFromMap = () => {
-    setOpen(false)
+    close()
     startPicking()
   }
 
@@ -289,7 +292,7 @@ export function Search() {
   // Render datetime step (first step - no station selected yet)
   if (step === "datetime") {
     return (
-      <CommandDialog open={open} onOpenChange={handleOpenChange} shouldFilter={false} className="sm:max-w-xl">
+      <CommandDialog open={isOpen} onOpenChange={handleOpenChange} shouldFilter={false} className="sm:max-w-xl">
         <CommandInput
           autoFocus
           placeholder="When did this ride start?"
@@ -317,7 +320,7 @@ export function Search() {
   // Render station step (after datetime confirmed)
   if (step === "station" && parsedDate) {
     return (
-      <CommandDialog open={open} onOpenChange={handleOpenChange} className="sm:max-w-xl" shouldFilter={false}>
+      <CommandDialog open={isOpen} onOpenChange={handleOpenChange} className="sm:max-w-xl" shouldFilter={false}>
         <div className="flex items-center gap-2 border-b px-3 py-2">
           <button
             onClick={handleBackToDatetime}
@@ -386,7 +389,7 @@ export function Search() {
   // Render results step
   if (step === "results" && selectedStation) {
     return (
-      <CommandDialog open={open} onOpenChange={handleOpenChange} className="sm:max-w-xl" shouldFilter={false}>
+      <CommandDialog open={isOpen} onOpenChange={handleOpenChange} className="sm:max-w-xl" shouldFilter={false}>
         <div className="flex items-center gap-2 border-b px-3 py-2">
           <button
             onClick={handleBackToStation}

@@ -15,6 +15,7 @@ import {
 import { createThrottledSampler } from "@/lib/misc";
 import { useAnimationStore } from "@/lib/stores/animation-store";
 import { usePickerStore } from "@/lib/stores/location-picker-store";
+import { useSearchStore } from "@/lib/stores/search-store";
 import { useStationsStore } from "@/lib/stores/stations-store";
 import type { GraphDataPoint, Phase, ProcessedTrip } from "@/lib/trip-types";
 import { TripDataService } from "@/services/trip-data-service";
@@ -22,7 +23,7 @@ import { DataFilterExtension } from "@deck.gl/extensions";
 import { TripsLayer } from "@deck.gl/geo-layers";
 import { IconLayer, PathLayer, SolidPolygonLayer } from "@deck.gl/layers";
 import { DeckGL } from "@deck.gl/react";
-import { Pause, Play, Shuffle } from "lucide-react";
+import { Pause, Play, Search, Shuffle } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Map as MapboxMap, Marker } from "react-map-gl/mapbox";
@@ -31,6 +32,7 @@ import { FollowModeBorder } from "./FollowModeBorder";
 import { MapControlButton } from "./MapControlButton";
 import { SelectedTripPanel } from "./SelectedTripPanel";
 import { TimeDisplay } from "./TimeDisplay";
+import { Kbd } from "./ui/kbd";
 
 import type { Color, MapViewState } from "@deck.gl/core";
 import { LinearInterpolator } from "@deck.gl/core";
@@ -296,6 +298,7 @@ export const BikeMap = () => {
 
   const { isPickingLocation, setPickedLocation, pickedLocation } = usePickerStore();
   const { getStation, load: loadStations } = useStationsStore();
+  const openSearch = useSearchStore((s) => s.open);
 
   // Load station data
   useEffect(() => {
@@ -825,6 +828,12 @@ export const BikeMap = () => {
       <div className="absolute top-3 inset-x-0 z-10 flex items-start justify-between px-3 pointer-events-none">
         {/* Controls - bottom-right on mobile, top-left on desktop */}
         <div className="fixed bottom-8 right-3 z-20 sm:static sm:z-auto flex flex-col items-end sm:items-start gap-1 pointer-events-auto">
+          {/* Search button */}
+          <MapControlButton onClick={openSearch}>
+            <Search className="w-4 h-4" />
+            Search
+            <Kbd className="ml-1 bg-white/20 text-white/70">⌘K</Kbd>
+          </MapControlButton>
           {/* Play/Pause button */}
           {animState === "idle" ? (
             <MapControlButton onClick={play}>
