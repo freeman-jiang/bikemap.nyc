@@ -27,6 +27,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Map as MapboxMap, Marker } from "react-map-gl/mapbox";
 import { ActiveRidesPanel } from "./ActiveRidesPanel";
+import { FollowModeBorder } from "./FollowModeBorder";
 import { MapControlButton } from "./MapControlButton";
 import { SelectedTripPanel } from "./SelectedTripPanel";
 import { TimeDisplay } from "./TimeDisplay";
@@ -788,6 +789,7 @@ export const BikeMap = () => {
 
   return (
     <div className="relative w-full h-full">
+      <FollowModeBorder />
       <DeckGL
         layers={layers}
         initialViewState={initialViewState}
