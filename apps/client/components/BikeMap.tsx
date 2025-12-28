@@ -300,6 +300,12 @@ export const BikeMap = () => {
   const { getStation, load: loadStations } = useStationsStore();
   const openSearch = useSearchStore((s) => s.open);
 
+  // Detect Mac vs Windows/Linux for keyboard shortcut display
+  const [isMac, setIsMac] = useState(true); // Default to Mac to avoid layout shift
+  useEffect(() => {
+    setIsMac(navigator.platform.toUpperCase().includes("MAC"));
+  }, []);
+
   // Load station data
   useEffect(() => {
     loadStations();
@@ -832,7 +838,7 @@ export const BikeMap = () => {
           <MapControlButton onClick={openSearch}>
             <Search className="w-4 h-4" />
             Search
-            <Kbd className="ml-1 bg-white/20 text-white/70">⌘K</Kbd>
+            <Kbd className="ml-1 bg-white/20 text-white/70">{isMac ? "⌘" : "Ctrl+"}K</Kbd>
           </MapControlButton>
           {/* Play/Pause button */}
           {animState === "idle" ? (
