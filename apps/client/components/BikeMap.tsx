@@ -324,6 +324,14 @@ export const BikeMap = () => {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [selectedTripId, selectTrip]);
 
+  // Keyboard shortcut refs (to avoid stale closures)
+  const animStateRef = useRef(animState);
+  const isPlayingRef = useRef(isPlaying);
+  useEffect(() => {
+    animStateRef.current = animState;
+    isPlayingRef.current = isPlaying;
+  }, [animState, isPlaying]);
+
   const rafRef = useRef<number | null>(null);
   const lastTimestampRef = useRef<number | null>(null);
   const fpsRef = useRef<HTMLDivElement>(null);
@@ -545,6 +553,17 @@ export const BikeMap = () => {
     storePause();
   }, [storePause]);
 
+  // Toggle play/pause based on current state
+  const togglePlayPause = useCallback(() => {
+    if (animStateRef.current === "idle") {
+      play();
+    } else if (isPlayingRef.current) {
+      pause();
+    } else {
+      resume();
+    }
+  }, [play, pause, resume]);
+
   // Reset and reload when config changes (track source values directly)
   const configRef = useRef({ windowStartMs, speedup });
   useEffect(() => {
@@ -640,6 +659,25 @@ export const BikeMap = () => {
       },
     });
   }, [activeTrips, selectTrip, getStation, time]);
+
+  // Keyboard shortcuts: P for play/pause, R for random
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      if (e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        togglePlayPause();
+      } else if (e.key.toLowerCase() === "r") {
+        e.preventDefault();
+        selectRandomBiker();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [togglePlayPause, selectRandomBiker]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -845,25 +883,27 @@ export const BikeMap = () => {
             <MapControlButton onClick={play}>
               <Play className="w-4 h-4" />
               Play
+              <Kbd className="ml-1 bg-white/20 text-white/70">P</Kbd>
             </MapControlButton>
           ) : isPlaying ? (
             <MapControlButton onClick={pause}>
               <Pause className="w-4 h-4" />
               Pause
+              <Kbd className="ml-1 bg-white/20 text-white/70">P</Kbd>
             </MapControlButton>
           ) : (
             <MapControlButton onClick={resume}>
               <Play className="w-4 h-4" />
               Play
+              <Kbd className="ml-1 bg-white/20 text-white/70">P</Kbd>
             </MapControlButton>
           )}
-          {/* Random button - only when animation has started */}
-          {animState === "playing" && (
-            <MapControlButton onClick={selectRandomBiker}>
-              <Shuffle className="w-4 h-4" />
-              Random
-            </MapControlButton>
-          )}
+          {/* Random button */}
+          <MapControlButton onClick={selectRandomBiker}>
+            <Shuffle className="w-4 h-4" />
+            Random
+            <Kbd className="ml-1 bg-white/20 text-white/70">R</Kbd>
+          </MapControlButton>
         </div>
 
         {/* Time - absolutely centered */}
