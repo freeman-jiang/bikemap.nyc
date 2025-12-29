@@ -678,13 +678,13 @@ export const BikeMap = () => {
     });
   }, [activeTrips, selectTrip, getStation, time]);
 
-  // Keyboard shortcuts: P for play/pause, R for random
+  // Keyboard shortcuts: Space for play/pause, R for random
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if user is typing in an input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
-      if (e.key.toLowerCase() === "p" && !e.metaKey && !e.ctrlKey) {
+      if (e.key === " " && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         togglePlayPause();
       } else if (e.key.toLowerCase() === "r" && !e.metaKey && !e.ctrlKey) {
@@ -917,11 +917,11 @@ export const BikeMap = () => {
         <div className="fixed bottom-8 right-3 z-20 sm:static sm:z-auto flex flex-col items-end sm:items-stretch gap-1 pointer-events-auto">
           {/* Search button */}
           <MapControlButton onClick={openSearch}>
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5 min-w-20">
               <Search className="w-4 h-4" />
               Search
             </span>
-            <Kbd className="bg-white/20 text-white/70">{isMac ? "⌘" : "Ctrl+"}K</Kbd>
+            <Kbd className="bg-zinc-800 text-white/70">{isMac ? "⌘" : "Ctrl+"}K</Kbd>
           </MapControlButton>
           {/* Play/Pause button */}
           {animState === "idle" ? (
@@ -930,7 +930,7 @@ export const BikeMap = () => {
                 <Play className="w-4 h-4" />
                 Play
               </span>
-              <Kbd className="bg-white/20 text-white/70">P</Kbd>
+              <Kbd className="bg-zinc-800 text-white/70">Space</Kbd>
             </MapControlButton>
           ) : isPlaying ? (
             <MapControlButton onClick={pause}>
@@ -938,7 +938,7 @@ export const BikeMap = () => {
                 <Pause className="w-4 h-4" />
                 Pause
               </span>
-              <Kbd className="bg-white/20 text-white/70">P</Kbd>
+              <Kbd className="bg-zinc-800 text-white/70">Space</Kbd>
             </MapControlButton>
           ) : (
             <MapControlButton onClick={resume}>
@@ -946,7 +946,7 @@ export const BikeMap = () => {
                 <Play className="w-4 h-4" />
                 Play
               </span>
-              <Kbd className="bg-white/20 text-white/70">P</Kbd>
+              <Kbd className="bg-zinc-800 text-white/70">Space</Kbd>
             </MapControlButton>
           )}
           {/* Random button */}
@@ -955,7 +955,7 @@ export const BikeMap = () => {
               <Shuffle className="w-4 h-4" />
               Random
             </span>
-            <Kbd className="bg-white/20 text-white/70">R</Kbd>
+            <Kbd className="bg-zinc-800 text-white/70">R</Kbd>
           </MapControlButton>
         </div>
 
