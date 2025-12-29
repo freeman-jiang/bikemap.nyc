@@ -17,6 +17,7 @@ import { point } from "@turf/helpers"
 import * as chrono from "chrono-node"
 import { Fzf } from "fzf"
 import { ArrowLeft, ArrowRight, Bike, CalendarSearch, Loader2, MapPin, Search as SearchIcon, X } from "lucide-react"
+import { AnimatePresence, motion, Variants } from "motion/react"
 import React from "react"
 
 type SearchMode = "ride" | "time"
@@ -41,6 +42,17 @@ type SearchStep = "datetime" | "station" | "results"
 
 const MAX_RESULTS = 10
 
+// Animation variants for staggered list items (initial load only)
+const listVariants: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.03 } },
+}
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 4 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.15, ease: "easeOut" } },
+}
+
 export function Search() {
   const { isOpen, open: openSearch, toggle, close } = useSearchStore()
   const [search, setSearch] = React.useState("")
@@ -55,6 +67,10 @@ export function Search() {
   const [trips, setTrips] = React.useState<Trip[]>([])
   const [resultsSearch, setResultsSearch] = React.useState("")
   const [isLoadingTrips, setIsLoadingTrips] = React.useState(false)
+
+  // Track if we've already shown the initial animation for each step
+  const hasAnimatedStations = React.useRef(false)
+  const hasAnimatedResults = React.useRef(false)
 
   const { pickedLocation, startPicking, clearPicking } = usePickerStore()
   const { animationStartDate } = useAnimationStore()
@@ -259,6 +275,7 @@ export function Search() {
   const handleBackToDatetime = () => {
     setStep("datetime")
     setSearch("")
+    hasAnimatedStations.current = false // Reset so it animates again next time
   }
 
   // From results step, go back to station step
@@ -268,6 +285,7 @@ export function Search() {
     setTrips([])
     setResultsSearch("")
     setSearch("") // Clear station search for fresh input
+    hasAnimatedResults.current = false // Reset so it animates again next time
   }
 
   const handleConfirmDatetime = () => {
@@ -349,23 +367,37 @@ export function Search() {
           <span>{'Try "July 4th 2019 at 8pm" or "Fri 4pm"'}</span>
         </div>
         <CommandList>
-          {parsedDate && (
-            <CommandGroup>
-              <CommandItem
-                onSelect={isDateOutOfRange ? undefined : (mode === "ride" ? handleConfirmDatetime : handleJumpToTime)}
-                className={cn("bg-accent", isDateOutOfRange && "cursor-not-allowed")}
-                disabled={isDateOutOfRange}
+          <AnimatePresence mode="wait">
+            {parsedDate && (
+              <motion.div
+                key="parsed-date"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
               >
-                <ArrowRight className="size-4" />
-                {formatDateTime(parsedDate)}
-              </CommandItem>
-              {isDateOutOfRange && (
-                <div className="px-3 py-2 text-xs text-zinc-400">
-                  No data available for this date.
-                </div>
-              )}
-            </CommandGroup>
-          )}
+                <CommandGroup>
+                  <CommandItem
+                    onSelect={isDateOutOfRange ? undefined : (mode === "ride" ? handleConfirmDatetime : handleJumpToTime)}
+                    className={cn("bg-accent", isDateOutOfRange && "cursor-not-allowed")}
+                    disabled={isDateOutOfRange}
+                  >
+                    <ArrowRight className="size-4" />
+                    {formatDateTime(parsedDate)}
+                  </CommandItem>
+                  {isDateOutOfRange && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="px-3 py-2 text-xs text-zinc-400"
+                    >
+                      No data available for this date.
+                    </motion.div>
+                  )}
+                </CommandGroup>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </CommandList>
       </CommandDialog>
     )
@@ -413,26 +445,34 @@ export function Search() {
           )}
           {filteredStations.length > 0 && (
             <CommandGroup heading={pickedLocation ? "Nearest Stations" : "Citibike Stations"}>
-              {filteredStations.map((station) => (
-                <CommandItem
-                  key={station.name}
-                  value={station.name}
-                  onSelect={() => handleSelectStation(station)}
-                >
-                  <Bike className="size-4" />
-                  <div className="flex flex-col flex-1">
-                    <span>{station.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {getStationRegionLabel(station)}
-                    </span>
-                  </div>
-                  {"distance" in station && (
-                    <span className="text-muted-foreground text-xs">
-                      {formatDistance(station.distance)}
-                    </span>
-                  )}
-                </CommandItem>
-              ))}
+              <motion.div
+                variants={listVariants}
+                initial={hasAnimatedStations.current ? false : "hidden"}
+                animate="visible"
+                onAnimationComplete={() => { hasAnimatedStations.current = true }}
+              >
+                {filteredStations.map((station) => (
+                  <motion.div key={station.name} variants={itemVariants}>
+                    <CommandItem
+                      value={station.name}
+                      onSelect={() => handleSelectStation(station)}
+                    >
+                      <Bike className="size-4" />
+                      <div className="flex flex-col flex-1">
+                        <span>{station.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {getStationRegionLabel(station)}
+                        </span>
+                      </div>
+                      {"distance" in station && (
+                        <span className="text-muted-foreground text-xs">
+                          {formatDistance(station.distance)}
+                        </span>
+                      )}
+                    </CommandItem>
+                  </motion.div>
+                ))}
+              </motion.div>
             </CommandGroup>
           )}
         </CommandList>
@@ -452,13 +492,28 @@ export function Search() {
             <ArrowLeft className="size-4" />
           </button>
           <span className="font-medium truncate">{selectedStation.name}</span>
-          {isLoadingTrips ? (
-            <Loader2 className="size-4 animate-spin text-muted-foreground shrink-0" />
-          ) : (
-            <span className="text-muted-foreground shrink-0">
-              · {trips.length} ride{trips.length !== 1 ? "s" : ""}
-            </span>
-          )}
+          <AnimatePresence mode="wait">
+            {isLoadingTrips ? (
+              <motion.div
+                key="loading-spinner"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                <Loader2 className="size-4 animate-spin text-muted-foreground shrink-0" />
+              </motion.div>
+            ) : (
+              <motion.span
+                key="trip-count"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-muted-foreground shrink-0"
+              >
+                · {trips.length} ride{trips.length !== 1 ? "s" : ""}
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
         <CommandInput
           autoFocus
@@ -467,52 +522,80 @@ export function Search() {
           onValueChange={setResultsSearch}
         />
         <CommandList className="max-h-[500px]">
-          {/* Empty state - no results after loading */}
-          {!isLoadingTrips && trips.length === 0 && (
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              No results found.
-            </div>
-          )}
+          <AnimatePresence mode="wait">
+            {/* Empty state - no results after loading */}
+            {!isLoadingTrips && trips.length === 0 && (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="py-6 text-center text-sm text-muted-foreground"
+              >
+                No rides found.
+              </motion.div>
+            )}
 
-          {/* Results - show filtered trips */}
-          {!isLoadingTrips && filteredTrips.length > 0 && (
-            <CommandGroup>
-              {filteredTrips.map((trip) => (
-                <CommandItem key={trip.id} value={trip.id} onSelect={() => handleSelectTrip(trip)}>
-                  <div className="flex items-center gap-3 w-full">
-                    {trip.bikeType === "electric_bike" ? (
-                      <EBike className="size-8 text-[#7DCFFF] shrink-0" />
-                    ) : (
-                      <Bike className="size-8 text-[#BB9AF7] shrink-0" />
-                    )}
-                    <div className="flex flex-col min-w-0">
-                      <span className="font-medium">
-                        Bike ride · {formatDurationMinutes(trip.startedAt, trip.endedAt)}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {formatDateTimeFull(trip.startedAt)}{trip.routeDistance && ` · ${formatDistance(trip.routeDistance)}`}
-                      </span>
-                    </div>
-                    <div className="ml-auto flex flex-col items-end">
-                      <span className="text-zinc-100 font-normal truncate max-w-[30ch]">
-                        {getStation(trip.endStationName).name}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {getStation(trip.endStationName).neighborhood}
-                      </span>
-                    </div>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
+            {/* Results - show filtered trips */}
+            {!isLoadingTrips && filteredTrips.length > 0 && (
+              <motion.div
+                key="results-list"
+                initial={hasAnimatedResults.current ? false : { opacity: 0, filter: "blur(4px)" }}
+                animate={{ opacity: 1, filter: "blur(0px)" }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                onAnimationComplete={() => { hasAnimatedResults.current = true }}
+              >
+                <CommandGroup>
+                  <motion.div
+                    variants={listVariants}
+                    initial={hasAnimatedResults.current ? false : "hidden"}
+                    animate="visible"
+                  >
+                    {filteredTrips.map((trip) => (
+                      <motion.div key={trip.id} variants={itemVariants}>
+                        <CommandItem value={trip.id} onSelect={() => handleSelectTrip(trip)}>
+                          <div className="flex items-center gap-3 w-full">
+                            {trip.bikeType === "electric_bike" ? (
+                              <EBike className="size-8 text-[#7DCFFF] shrink-0" />
+                            ) : (
+                              <Bike className="size-8 text-[#BB9AF7] shrink-0" />
+                            )}
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-medium">
+                                Bike ride · {formatDurationMinutes(trip.startedAt, trip.endedAt)}
+                              </span>
+                              <span className="text-sm text-muted-foreground">
+                                {formatDateTimeFull(trip.startedAt)}{trip.routeDistance && ` · ${formatDistance(trip.routeDistance)}`}
+                              </span>
+                            </div>
+                            <div className="ml-auto flex flex-col items-end">
+                              <span className="text-zinc-100 font-normal truncate max-w-[30ch]">
+                                {getStation(trip.endStationName).name}
+                              </span>
+                              <span className="text-sm text-muted-foreground">
+                                {getStation(trip.endStationName).neighborhood}
+                              </span>
+                            </div>
+                          </div>
+                        </CommandItem>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </CommandGroup>
+              </motion.div>
+            )}
 
-          {/* Filtered empty state - has trips but filter returned nothing */}
-          {!isLoadingTrips && trips.length > 0 && filteredTrips.length === 0 && (
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              No results found.
-            </div>
-          )}
+            {/* Filtered empty state - has trips but filter returned nothing */}
+            {!isLoadingTrips && trips.length > 0 && filteredTrips.length === 0 && (
+              <motion.div
+                key="filtered-empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="py-6 text-center text-sm text-muted-foreground"
+              >
+                No results found.
+              </motion.div>
+            )}
+          </AnimatePresence>
         </CommandList>
       </CommandDialog>
     )
