@@ -90,6 +90,11 @@ function prepareTripsForDeck(data: {
 
       if (coordinates.length < 2) return null;
 
+      coordinates[0] = [trip.startLng, trip.startLat];
+      if (trip.endLat && trip.endLng) {
+        coordinates[coordinates.length - 1] = [trip.endLng, trip.endLat];
+      }
+
       // Calculate cumulative distances
       const cumulativeDistances: number[] = [0];
       for (let i = 1; i < coordinates.length; i++) {
