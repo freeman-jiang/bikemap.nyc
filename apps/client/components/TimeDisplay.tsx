@@ -26,7 +26,7 @@ export function TimeDisplay({ simulationTime, startDate }: Props) {
             <div className="relative">
               <div className="w-20 h-[2px] rounded-full bg-white/10" />
               <div
-                className="absolute -inset-x-7 -top-5 -bottom-5"
+                className="absolute -inset-x-6.5 -top-5 -bottom-5"
                 style={{
                   maskImage:
                     "linear-gradient(to right, transparent 20%, black 35%, black 65%, transparent 80%)",
