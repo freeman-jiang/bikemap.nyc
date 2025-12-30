@@ -64,6 +64,8 @@ export type ProcessedTrip = {
   isSelected: boolean;
   currentHeadColor: [number, number, number, number];
   currentPathColor: [number, number, number, number];
+  // Viewer-relative tracking (null = never seen by viewer)
+  viewerFirstSeenSeconds: number | null;
   // Metadata for UI display
   memberCasual: string;
   startStationName: string;

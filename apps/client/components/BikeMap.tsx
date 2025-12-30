@@ -48,19 +48,18 @@ const ARROW_SVG = `data:image/svg+xml;base64,${btoa(`
 </svg>
 `)}`;
 
-// Layer accessor functions (extracted to avoid recreation on each render)
-const getPath = (d: ProcessedTrip) => d.path;
-const getTimestamps = (d: ProcessedTrip) => d.timestamps;
-const getTripColor = (d: ProcessedTrip): Color =>
-  d.isSelected
-    ? (COLORS.selected)
-    : d.bikeType === "electric_bike"
-      ? (COLORS.electric)
-      : (COLORS.classic);
-
 // Color utilities
 type Color4 = [number, number, number, number];
 const MAX_ALPHA = 0.8 * 255;
+
+// Layer accessor functions (extracted to avoid recreation on each render)
+const getPath = (d: ProcessedTrip) => d.path;
+const getTimestamps = (d: ProcessedTrip) => d.timestamps;
+// Use currentPathColor which includes viewer fade alpha
+const getTripColor = (d: ProcessedTrip): Color4 =>
+  d.isSelected
+    ? [COLORS.selected[0], COLORS.selected[1], COLORS.selected[2], d.currentPathColor[3]]
+    : d.currentPathColor;
 
 // IconLayer accessors - now use ProcessedTrip directly (no intermediate BikeHead objects)
 const getBikeHeadPosition = (d: ProcessedTrip, { target }: { target: number[] }): [number, number, number] => {
@@ -130,7 +129,15 @@ function updateTripState(
     return false;
   }
 
-  // Determine phase and progress using precomputed boundaries
+  // Track when viewer first sees this trip
+  if (trip.viewerFirstSeenSeconds === null) {
+    trip.viewerFirstSeenSeconds = currentTime;
+  }
+
+  // Calculate viewer fade progress (0 to 1, clamped) - used as alpha multiplier
+  const viewerFadeProgress = Math.min(1, (currentTime - trip.viewerFirstSeenSeconds) / fadeDurationSimSeconds);
+
+  // Determine timeline phase and progress using precomputed boundaries
   let phase: Phase;
   let phaseProgress: number;
 
@@ -153,7 +160,7 @@ function updateTripState(
     trip.currentPhase = phase;
     trip.currentPhaseProgress = phaseProgress;
     trip.isVisible = true;
-    computeTripColors(trip);
+    computeTripColors(trip, viewerFadeProgress);
     return true;
   }
 
@@ -164,7 +171,7 @@ function updateTripState(
     trip.currentPhase = phase;
     trip.currentPhaseProgress = phaseProgress;
     trip.isVisible = true;
-    computeTripColors(trip);
+    computeTripColors(trip, viewerFadeProgress);
     return true;
   }
 
@@ -230,13 +237,13 @@ function updateTripState(
   trip.currentPhase = phase;
   trip.currentPhaseProgress = phaseProgress;
   trip.isVisible = true;
-  computeTripColors(trip);
+  computeTripColors(trip, viewerFadeProgress);
 
   return true;
 }
 
-// Compute colors in-place based on current phase and progress
-function computeTripColors(trip: ProcessedTrip): void {
+// Compute colors in-place based on current phase, progress, and viewer fade
+function computeTripColors(trip: ProcessedTrip, viewerFadeProgress: number): void {
   const bikeColor = trip.bikeType === "electric_bike" ? COLORS.electric : COLORS.classic;
   const phase = trip.currentPhase;
   const progress = trip.currentPhaseProgress;
@@ -268,15 +275,16 @@ function computeTripColors(trip: ProcessedTrip): void {
       pathAlpha = PATH_OPACITY;
   }
 
+  // Apply viewer fade as final alpha multiplier (orthogonal to timeline phases)
   trip.currentHeadColor[0] = r;
   trip.currentHeadColor[1] = g;
   trip.currentHeadColor[2] = b;
-  trip.currentHeadColor[3] = headAlpha;
+  trip.currentHeadColor[3] = headAlpha * viewerFadeProgress;
 
   trip.currentPathColor[0] = r;
   trip.currentPathColor[1] = g;
   trip.currentPathColor[2] = b;
-  trip.currentPathColor[3] = pathAlpha;
+  trip.currentPathColor[3] = pathAlpha * viewerFadeProgress;
 }
 
 // Cached interpolator for camera follow (avoid allocating new object every frame)
@@ -813,7 +821,7 @@ export const BikeMap = () => {
         getFilterValue,
         filterRange: [[-Infinity, time], [time, Infinity]],
         updateTriggers: {
-          getColor: [selectedTripId],
+          getColor: [time, selectedTripId],
         },
       }),
       new IconLayer({

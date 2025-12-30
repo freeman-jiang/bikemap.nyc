@@ -183,6 +183,8 @@ function prepareTripsForDeck(data: {
         isSelected: false,
         currentHeadColor: [0, 0, 0, 0] as [number, number, number, number],
         currentPathColor: [0, 0, 0, 0] as [number, number, number, number],
+        // Viewer-relative tracking (null = never seen by viewer)
+        viewerFirstSeenSeconds: null as number | null,
         // Metadata for UI display
         memberCasual: trip.memberCasual,
         startStationName: trip.startStationName,
