@@ -47,7 +47,7 @@ export function Search() {
   const [search, setSearch] = React.useState("")
 
   // Mode switching (ride search vs time jump)
-  const [mode, setMode] = React.useState<SearchMode>("ride")
+  const [mode, setMode] = React.useState<SearchMode>("time")
 
   // Multi-step flow state
   const [step, setStep] = React.useState<SearchStep>("datetime")
@@ -359,13 +359,13 @@ export function Search() {
         <div className="flex items-center px-3 py-2 border-b">
           <Tabs value={mode} onValueChange={(v) => setMode(v as SearchMode)} >
             <TabsList className="bg-[#1c1c1f]">
-              <TabsTrigger value="ride" className="data-[state=active]:bg-zinc-800">
-                <SearchIcon className="size-3.5" />
-                Find ride
-              </TabsTrigger>
               <TabsTrigger value="time" className="data-[state=active]:bg-zinc-800">
                 <CalendarSearch className="size-3.5" />
                 Time travel
+              </TabsTrigger>
+              <TabsTrigger value="ride" className="data-[state=active]:bg-zinc-800">
+                <SearchIcon className="size-3.5" />
+                Find ride
               </TabsTrigger>
             </TabsList>
           </Tabs>
