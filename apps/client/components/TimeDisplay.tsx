@@ -13,7 +13,7 @@ export function TimeDisplay({ simulationTime, startDate }: Props) {
       <div className="text-white/90 text-xs tracking-wide font-mono">
         {formatDateShort(displayTimeMs)}
       </div>
-      <div className="text-xl font-semibold tabular-nums text-white/90">
+      <div className="text-xl font-semibold tabular-nums text-white/90 tracking-tight">
         {formatTimeOnly(displayTimeMs)}
       </div>
     </div>

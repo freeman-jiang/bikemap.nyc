@@ -91,7 +91,7 @@ export const ActiveRidesPanel = memo(
           </svg>
         </div>
         <div className="mt-0.5 flex items-baseline gap-1.5 text-left">
-          <span ref={ridesRef} className="text-xl font-semibold tabular-nums">--</span>
+          <span ref={ridesRef} className="text-xl font-semibold tabular-nums tracking-tight">--</span>
           <span className="text-[10px] tracking-wide text-white/70">RIDES</span>
         </div>
         <div ref={fpsRef} className="mt-0.5 text-[10px] tracking-wide text-white/50 text-left">-- FPS</div>
