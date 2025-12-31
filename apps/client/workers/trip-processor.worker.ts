@@ -290,4 +290,4 @@ self.onmessage = (event: MessageEvent<MainToWorkerMessage>) => {
 };
 
 // Signal that worker script has loaded
-console.log("Trip processor worker loaded");
+console.log("[TripProcessorWorker] Loaded");

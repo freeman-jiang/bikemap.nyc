@@ -44,7 +44,6 @@ class DuckDBService {
   }
 
   private async _initialize(): Promise<void> {
-    console.log("[DuckDB] Initializing...");
     const startTime = Date.now();
 
     // Use jsdelivr CDN bundles
@@ -70,9 +69,9 @@ class DuckDBService {
       filesystem: {
         forceFullHTTPReads: false,
         allowFullHTTPReads: false,
+        reliableHeadRequests: true
       },
     });
-    console.log("[DuckDB] Configured filesystem for range requests");
 
     this.conn = await this.db.connect();
 

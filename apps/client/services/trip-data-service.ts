@@ -1,4 +1,3 @@
-import { duckdbService } from "@/services/duckdb-service";
 import {
   BATCH_SIZE_SECONDS,
   CHUNK_SIZE_SECONDS,
@@ -10,6 +9,7 @@ import type {
   TripWithRoute,
   WorkerToMainMessage,
 } from "@/lib/trip-types";
+import { duckdbService } from "@/services/duckdb-service";
 
 export interface TripDataServiceConfig {
   windowStartMs: number;
@@ -50,7 +50,7 @@ export class TripDataService {
   async init(): Promise<Map<string, ProcessedTrip>> {
     const { windowStartMs, fadeDurationSimSeconds } = this.config;
 
-    console.log("Initializing trip data service...");
+    console.log("[TripDataService] Initializing...");
 
     // Initialize DuckDB first (creates Parquet views)
     await duckdbService.init();
