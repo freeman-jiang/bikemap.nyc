@@ -37,7 +37,7 @@ import { Kbd } from "./ui/kbd";
 import type { MapViewState } from "@deck.gl/core";
 import { LinearInterpolator } from "@deck.gl/core";
 
-type AnimationState = "idle" | "playing";
+type AnimationState = "init" | "playing";
 
 // Arrow icon for bike heads
 const ARROW_SVG = `data:image/svg+xml;base64,${btoa(`
@@ -309,7 +309,7 @@ export const BikeMap = () => {
   const realFadeDurationMs = REAL_FADE_DURATION_MS * speedup;
 
   const [activeTrips, setActiveTrips] = useState<ProcessedTrip[]>([]);
-  const [animState, setAnimState] = useState<AnimationState>("idle");
+  const [animState, setAnimState] = useState<AnimationState>("init");
   const [initialViewState, setInitialViewState] = useState<MapViewState>(INITIAL_VIEW_STATE);
   const [graphData, setGraphData] = useState<GraphDataPoint[]>([]);
   const [bearing, setBearing] = useState(0);
@@ -548,17 +548,19 @@ export const BikeMap = () => {
     storePause();
   }, [storePause]);
 
-  // Pause animation when showing stations (station/results step)
+  // Pause animation when showing stations, resume when back to bikes
   useEffect(() => {
     const showStations = searchStep === "station" || searchStep === "results";
     if (showStations && rafRef.current) {
       pause();
+    } else if (searchStep === "datetime" && !rafRef.current && animStateRef.current !== "init") {
+      resume();
     }
-  }, [searchStep, pause]);
+  }, [searchStep, pause, resume]);
 
   // Toggle play/pause based on current state
   const togglePlayPause = useCallback(() => {
-    if (animStateRef.current === "idle") {
+    if (animStateRef.current === "init") {
       play();
     } else if (isPlayingRef.current) {
       pause();
@@ -597,7 +599,7 @@ export const BikeMap = () => {
       graphSamplerRef.current.reset();
       fpsSamplerRef.current.reset();
       setActiveTrips([]);
-      setAnimState("idle");
+      setAnimState("init");
       setGraphData([]);
     }
 
@@ -720,7 +722,9 @@ export const BikeMap = () => {
     if (!selectedTripId) return [];
     const trip = tripMapRef.current.get(selectedTripId);
     return trip ? [trip] : [];
-  }, [selectedTripId, activeTrips]);
+    // forgive me for this
+    // eslint-disable-next-line react-hooks/exhaustive-deps 
+  }, [selectedTripId, activeTrips]); 
 
   const layers = useMemo(() => {
     const hasSelection = selectedTripData.length > 0;
@@ -920,7 +924,7 @@ export const BikeMap = () => {
             <Kbd className="bg-zinc-800 text-white/70">{isMac ? "⌘" : "Ctrl+"}K</Kbd>
           </MapControlButton>
           {/* Play/Pause button */}
-          {animState === "idle" ? (
+          {animState === "init" ? (
             <MapControlButton ref={playPauseButtonRef} onClick={play}>
               <span className="flex items-center gap-1.5">
                 <Play className="w-4 h-4" />
