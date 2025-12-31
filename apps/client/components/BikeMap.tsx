@@ -2,15 +2,15 @@
 
 import {
   CAMERA_POLLING_INTERVAL_MS,
-  CHUNK_SIZE_SECONDS,
   CHUNKS_PER_BATCH,
   COLORS,
-  FADE_DURATION_MS,
-  GRAPH_WINDOW_SIZE_SECONDS,
   INITIAL_VIEW_STATE,
-  MAX_FRAME_DELTA_MS,
   PREFETCH_THRESHOLD_CHUNKS,
-  TRAIL_LENGTH_SECONDS,
+  REAL_FADE_DURATION_MS,
+  REAL_MAX_FRAME_DELTA_MS,
+  SIM_CHUNK_SIZE_MS,
+  SIM_GRAPH_WINDOW_SIZE_MS,
+  SIM_TRAIL_LENGTH_MS,
 } from "@/lib/config";
 import { createThrottledSampler } from "@/lib/misc";
 import { useAnimationStore } from "@/lib/stores/animation-store";
@@ -25,8 +25,8 @@ import { TripsLayer } from "@deck.gl/geo-layers";
 import { IconLayer, PathLayer, ScatterplotLayer, SolidPolygonLayer } from "@deck.gl/layers";
 import { DeckGL } from "@deck.gl/react";
 import { Pause, Play, Search, Settings, Shuffle } from "lucide-react";
-import { AnimatePresence } from "motion/react";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Map as MapboxMap, Marker } from "react-map-gl/mapbox";
 import { ActiveRidesPanel } from "./ActiveRidesPanel";
@@ -35,7 +35,7 @@ import { SelectedTripPanel } from "./SelectedTripPanel";
 import { TimeDisplay } from "./TimeDisplay";
 import { Kbd } from "./ui/kbd";
 
-import type { Color, MapViewState } from "@deck.gl/core";
+import type { MapViewState } from "@deck.gl/core";
 import { LinearInterpolator } from "@deck.gl/core";
 
 type AnimationState = "idle" | "playing";
@@ -55,7 +55,7 @@ const MAX_ALPHA = 0.8 * 255;
 
 // Layer accessor functions (extracted to avoid recreation on each render)
 const getPath = (d: ProcessedTrip) => d.path;
-const getTimestamps = (d: ProcessedTrip) => d.timestamps;
+const getTimestamps = (d: ProcessedTrip) => d.simTimestampsMs;
 // Use currentPathColor which includes viewer fade alpha
 const getTripColor = (d: ProcessedTrip): Color4 =>
   d.isSelected
@@ -92,11 +92,11 @@ const PATH_OPACITY = 180;
 const getSelectedPathColor = (d: ProcessedTrip): Color4 => d.currentPathColor;
 
 // DataFilterExtension for GPU-based visibility filtering
-// filterSize: 2 means we filter on 2 values [visibleStartSeconds, visibleEndSeconds]
+// filterSize: 2 means we filter on 2 values [simVisibleStartMs, simVisibleEndMs]
 const dataFilter = new DataFilterExtension({ filterSize: 2 });
 
-// Accessor for DataFilterExtension - returns [visibleStartSeconds, visibleEndSeconds]
-const getFilterValue = (d: ProcessedTrip): [number, number] => [d.visibleStartSeconds, d.visibleEndSeconds];
+// Accessor for DataFilterExtension - returns [simVisibleStartMs, simVisibleEndMs]
+const getFilterValue = (d: ProcessedTrip): [number, number] => [d.simVisibleStartMs, d.simVisibleEndMs];
 
 // Interpolate between two angles, handling 360°/0° wrapping
 function interpolateAngle(from: number, to: number, factor: number): number {
@@ -111,43 +111,43 @@ function interpolateAngle(from: number, to: number, factor: number): number {
 // Update trip's mutable state in place. Returns true if visible.
 function updateTripState(
   trip: ProcessedTrip,
-  currentTime: number,
-  fadeDurationSimSeconds: number
+  simTimeMs: number,
+  realFadeDurationMs: number
 ): boolean {
   const {
     path,
-    visibleStartSeconds,
-    visibleEndSeconds,
-    fadeInEndSeconds,
-    endTimeSeconds,
+    simVisibleStartMs,
+    simVisibleEndMs,
+    simFadeInEndMs,
+    simEndTimeMs,
     firstSegmentBearing,
     lastSegmentBearing,
   } = trip;
 
   // Not visible yet or already gone
-  if (currentTime < visibleStartSeconds || currentTime > visibleEndSeconds) {
+  if (simTimeMs < simVisibleStartMs || simTimeMs > simVisibleEndMs) {
     trip.isVisible = false;
     return false;
   }
 
   // Track when viewer first sees this trip
-  if (trip.viewerFirstSeenSeconds === null) {
-    trip.viewerFirstSeenSeconds = currentTime;
+  if (trip.simViewerFirstSeenMs === null) {
+    trip.simViewerFirstSeenMs = simTimeMs;
   }
 
   // Calculate viewer fade progress (0 to 1, clamped) - used as alpha multiplier
-  const viewerFadeProgress = Math.min(1, (currentTime - trip.viewerFirstSeenSeconds) / fadeDurationSimSeconds);
+  const viewerFadeProgress = Math.min(1, (simTimeMs - trip.simViewerFirstSeenMs) / realFadeDurationMs);
 
   // Determine timeline phase and progress using precomputed boundaries
   let phase: Phase;
   let phaseProgress: number;
 
-  if (currentTime < fadeInEndSeconds) {
+  if (simTimeMs < simFadeInEndMs) {
     phase = "fading-in";
-    phaseProgress = (currentTime - visibleStartSeconds) / fadeDurationSimSeconds;
-  } else if (currentTime >= endTimeSeconds) {
+    phaseProgress = (simTimeMs - simVisibleStartMs) / realFadeDurationMs;
+  } else if (simTimeMs >= simEndTimeMs) {
     phase = "fading-out";
-    phaseProgress = (currentTime - endTimeSeconds) / fadeDurationSimSeconds;
+    phaseProgress = (simTimeMs - simEndTimeMs) / realFadeDurationMs;
   } else {
     phase = "moving";
     phaseProgress = 1;
@@ -177,18 +177,18 @@ function updateTripState(
   }
 
   // Moving phase: interpolate along route with look-ahead bearing
-  const { timestamps, cumulativeDistances } = trip;
-  const movingDuration = endTimeSeconds - fadeInEndSeconds;
-  const movingProgress = movingDuration > 0
-    ? Math.max(0, Math.min(1, (currentTime - fadeInEndSeconds) / movingDuration))
+  const { simTimestampsMs, cumulativeDistances } = trip;
+  const simMovingDurationMs = simEndTimeMs - simFadeInEndMs;
+  const movingProgress = simMovingDurationMs > 0
+    ? Math.max(0, Math.min(1, (simTimeMs - simFadeInEndMs) / simMovingDurationMs))
     : 1;
 
   // Map to timestamp along route
-  const tripTime = timestamps[0] + movingProgress * (timestamps[timestamps.length - 1] - timestamps[0]);
+  const simTripTimeMs = simTimestampsMs[0] + movingProgress * (simTimestampsMs[simTimestampsMs.length - 1] - simTimestampsMs[0]);
 
   // Use cached index and scan forward (time only increases)
   let idx = trip.lastSegmentIndex;
-  while (idx < timestamps.length - 1 && timestamps[idx + 1] < tripTime) {
+  while (idx < simTimestampsMs.length - 1 && simTimestampsMs[idx + 1] < simTripTimeMs) {
     idx++;
   }
   trip.lastSegmentIndex = idx;
@@ -198,9 +198,9 @@ function updateTripState(
     trip.currentPosition[0] = path[path.length - 1][0];
     trip.currentPosition[1] = path[path.length - 1][1];
   } else {
-    const t0 = timestamps[idx];
-    const t1 = timestamps[idx + 1];
-    t = t1 > t0 ? (tripTime - t0) / (t1 - t0) : 0;
+    const t0 = simTimestampsMs[idx];
+    const t1 = simTimestampsMs[idx + 1];
+    t = t1 > t0 ? (simTripTimeMs - t0) / (t1 - t0) : 0;
 
     const p0 = path[idx];
     const p1 = path[idx + 1];
@@ -295,19 +295,19 @@ export const BikeMap = () => {
   // Animation store
   const speedup = useAnimationStore((s) => s.speedup);
   const animationStartDate = useAnimationStore((s) => s.animationStartDate);
-  const time = useAnimationStore((s) => s.currentTime);
+  const simTimeMs = useAnimationStore((s) => s.simCurrentTimeMs);
   const storePlay = useAnimationStore((s) => s.play);
   const storePause = useAnimationStore((s) => s.pause);
   const isPlaying = useAnimationStore((s) => s.isPlaying);
-  const advanceTime = useAnimationStore((s) => s.advanceTime);
-  const setCurrentTime = useAnimationStore((s) => s.setCurrentTime);
+  const advanceSimTime = useAnimationStore((s) => s.advanceSimTime);
+  const setSimCurrentTimeMs = useAnimationStore((s) => s.setSimCurrentTimeMs);
   const selectedTripId = useAnimationStore((s) => s.selectedTripId);
   const selectedTripInfo = useAnimationStore((s) => s.selectedTripInfo);
   const selectTrip = useAnimationStore((s) => s.selectTrip);
 
   // Derived values (computed at consumption time)
-  const windowStartMs = animationStartDate.getTime();
-  const fadeDurationSimSeconds = (FADE_DURATION_MS / 1000) * speedup;
+  const realWindowStartMs = animationStartDate.getTime();
+  const realFadeDurationMs = REAL_FADE_DURATION_MS * speedup;
 
   const [activeTrips, setActiveTrips] = useState<ProcessedTrip[]>([]);
   const [animState, setAnimState] = useState<AnimationState>("idle");
@@ -382,9 +382,9 @@ export const BikeMap = () => {
     }, 100);
   }, []);
 
-  // Get chunk index from simulation time (seconds)
+  // Get chunk index from simulation time (ms)
   const getChunkIndex = useCallback(
-    (timeSeconds: number) => Math.floor(timeSeconds / CHUNK_SIZE_SECONDS),
+    (simTimeMs: number) => Math.floor(simTimeMs / SIM_CHUNK_SIZE_MS),
     []
   );
 
@@ -421,7 +421,7 @@ export const BikeMap = () => {
   );
 
 
-  const currentChunk = getChunkIndex(time);
+  const currentChunk = getChunkIndex(simTimeMs);
 
   // On chunk change: load chunk from worker, prefetch next batch, cleanup old trips
   useEffect(() => {
@@ -452,7 +452,7 @@ export const BikeMap = () => {
 
     // Remove trips that have fully finished (including fade-out)
     for (const [id, trip] of tripMapRef.current) {
-      if (trip.visibleEndSeconds < time) {
+      if (trip.simVisibleEndMs < simTimeMs) {
         tripMapRef.current.delete(id);
       }
     }
@@ -460,18 +460,17 @@ export const BikeMap = () => {
     // Sync state for rendering
     const currentTrips = Array.from(tripMapRef.current.values());
     setActiveTrips(currentTrips);
-  }, [currentChunk, animState, loadUpcomingRides, time]);
+  }, [currentChunk, animState, loadUpcomingRides, simTimeMs]);
 
   // Start the animation loop (used by both play and resume)
   const startLoop = useCallback(() => {
     const tick = (timestamp: number) => {
       if (lastTimestampRef.current !== null) {
-        const rawDeltaMs = timestamp - lastTimestampRef.current;
-        // Cap deltaMs to prevent time jumps when returning from background tab
-        const deltaMs = Math.min(rawDeltaMs, MAX_FRAME_DELTA_MS);
-        const deltaSeconds = deltaMs / 1000;
-        advanceTime(deltaSeconds * speedup);
-        const currentFps = 1000 / rawDeltaMs;
+        const realRawDeltaMs = timestamp - lastTimestampRef.current;
+        // Cap delta to prevent time jumps when returning from background tab
+        const realDeltaMs = Math.min(realRawDeltaMs, REAL_MAX_FRAME_DELTA_MS);
+        advanceSimTime(realDeltaMs * speedup);
+        const currentFps = 1000 / realRawDeltaMs;
         smoothedFpsRef.current = smoothedFpsRef.current * 0.9 + currentFps * 0.1;
         fpsSamplerRef.current.sample(() => {
           if (panelRef.current?.fps) {
@@ -484,12 +483,12 @@ export const BikeMap = () => {
 
         // Sample graph data at intervals
         graphSamplerRef.current.sample(() => {
-          const currentSimTime = useAnimationStore.getState().currentTime;
+          const simTimeMs = useAnimationStore.getState().simCurrentTimeMs;
           setGraphData((prev) => {
-            const newPoint = { time: currentSimTime, count: visibleCountRef.current };
+            const newPoint = { simTimeMs, count: visibleCountRef.current };
             const updated = [...prev, newPoint];
             // Keep only points within rolling window
-            return updated.filter((p) => currentSimTime - p.time <= GRAPH_WINDOW_SIZE_SECONDS);
+            return updated.filter((p) => simTimeMs - p.simTimeMs <= SIM_GRAPH_WINDOW_SIZE_MS);
           });
         });
 
@@ -502,7 +501,7 @@ export const BikeMap = () => {
           const trip = tripMapRef.current.get(selectedId);
 
           // Clear selection if trip ended OR if trip no longer exists in map
-          if (!trip || state.currentTime > trip.visibleEndSeconds) {
+          if (!trip || state.simCurrentTimeMs > trip.simVisibleEndMs) {
             state.selectTrip(null);
             return;
           }
@@ -524,11 +523,11 @@ export const BikeMap = () => {
     };
 
     rafRef.current = requestAnimationFrame(tick);
-  }, [speedup, advanceTime]);
+  }, [speedup, advanceSimTime]);
 
   const play = useCallback(() => {
     setAnimState("playing");
-    setCurrentTime(0);
+    setSimCurrentTimeMs(0);
     storePlay();
     lastChunkRef.current = 0;
     lastTimestampRef.current = null;
@@ -536,7 +535,7 @@ export const BikeMap = () => {
     fpsSamplerRef.current.reset();
     setGraphData([]);
     startLoop();
-  }, [setCurrentTime, storePlay, startLoop]);
+  }, [setSimCurrentTimeMs, storePlay, startLoop]);
 
   const resume = useCallback(() => {
     lastTimestampRef.current = null; // Reset to avoid large delta on first frame
@@ -571,14 +570,14 @@ export const BikeMap = () => {
   }, [play, pause, resume]);
 
   // Initialize service and reload when config changes
-  const configRef = useRef<{ windowStartMs: number; speedup: number } | null>(null);
+  const configRef = useRef<{ realWindowStartMs: number; speedup: number } | null>(null);
   useEffect(() => {
     const prev = configRef.current;
     const isInitialMount = prev === null;
 
     // Skip if config unchanged (but always run on initial mount)
-    if (!isInitialMount && prev.windowStartMs === windowStartMs && prev.speedup === speedup) return;
-    configRef.current = { windowStartMs, speedup };
+    if (!isInitialMount && prev.realWindowStartMs === realWindowStartMs && prev.speedup === speedup) return;
+    configRef.current = { realWindowStartMs, speedup };
 
     // Only log and reset state on config changes, not initial mount
     if (!isInitialMount) {
@@ -613,9 +612,9 @@ export const BikeMap = () => {
 
       // Create new service
       const service = new TripDataService({
-        windowStartMs,
+        realWindowStartMs,
         animationStartDate,
-        fadeDurationSimSeconds,
+        realFadeDurationMs,
       });
 
       serviceRef.current = service;
@@ -644,15 +643,15 @@ export const BikeMap = () => {
       serviceRef.current?.terminate();
       serviceRef.current = null;
     };
-  }, [windowStartMs, speedup, fadeDurationSimSeconds, play, animationStartDate]);
+  }, [realWindowStartMs, speedup, realFadeDurationMs, play, animationStartDate]);
 
   // Select a random visible biker with at least half their trip remaining
   const selectRandomBiker = useCallback(() => {
     const eligibleTrips = activeTrips.filter((t) => {
       if (!t.isVisible) return false;
       // Only select trips that have at least half their duration remaining
-      const midpoint = (t.startTimeSeconds + t.endTimeSeconds) / 2;
-      return time < midpoint;
+      const simMidpointMs = (t.simStartTimeMs + t.simEndTimeMs) / 2;
+      return simTimeMs < simMidpointMs;
     });
     if (eligibleTrips.length === 0) return;
     const randomTrip = eligibleTrips[Math.floor(Math.random() * eligibleTrips.length)];
@@ -670,12 +669,12 @@ export const BikeMap = () => {
         endStationName: endStation.name,
         startNeighborhood: startStation.neighborhood,
         endNeighborhood: endStation.neighborhood,
-        startedAt: new Date(randomTrip.startedAtMs),
-        endedAt: new Date(randomTrip.endedAtMs),
+        startedAt: new Date(randomTrip.realStartedAtMs),
+        endedAt: new Date(randomTrip.realEndedAtMs),
         routeDistance: randomTrip.routeDistance,
       },
     });
-  }, [activeTrips, selectTrip, getStation, time]);
+  }, [activeTrips, selectTrip, getStation, simTimeMs]);
 
   // Keyboard shortcuts: Space for play/pause, R for random, S for settings
   useEffect(() => {
@@ -710,16 +709,16 @@ export const BikeMap = () => {
   useMemo(() => {
     let count = 0;
     for (const trip of activeTrips) {
-      if (time < trip.visibleStartSeconds || time > trip.visibleEndSeconds) {
+      if (simTimeMs < trip.simVisibleStartMs || simTimeMs > trip.simVisibleEndMs) {
         trip.isVisible = false;
         continue;
       }
-      updateTripState(trip, time, fadeDurationSimSeconds);
+      updateTripState(trip, simTimeMs, realFadeDurationMs);
       trip.isSelected = trip.id === selectedTripId;
       count++;
     }
     visibleCountRef.current = count;
-  }, [activeTrips, time, selectedTripId, fadeDurationSimSeconds]);
+  }, [activeTrips, simTimeMs, selectedTripId, realFadeDurationMs]);
 
   // Memoize selected trip data - O(1) map lookup instead of O(n) filter
   // Depends on activeTrips to recalculate when trips load after config change
@@ -771,16 +770,16 @@ export const BikeMap = () => {
         widthMinPixels: 3,
         jointRounded: true,
         capRounded: true,
-        trailLength: TRAIL_LENGTH_SECONDS,
-        currentTime: time,
+        trailLength: SIM_TRAIL_LENGTH_MS,
+        currentTime: simTimeMs,
         pickable: false,
         // GPU-based visibility filtering - only render trips where:
-        // visibleStartSeconds <= time AND visibleEndSeconds >= time
+        // simVisibleStartMs <= simTimeMs AND simVisibleEndMs >= simTimeMs
         extensions: [dataFilter],
         getFilterValue,
-        filterRange: [[-Infinity, time], [time, Infinity]],
+        filterRange: [[-Infinity, simTimeMs], [simTimeMs, Infinity]],
         updateTriggers: {
-          getColor: [time, selectedTripId],
+          getColor: [simTimeMs, selectedTripId],
         },
       }),
       new IconLayer({
@@ -799,11 +798,11 @@ export const BikeMap = () => {
         // GPU-based visibility filtering
         extensions: [dataFilter],
         getFilterValue,
-        filterRange: [[-Infinity, time], [time, Infinity]],
+        filterRange: [[-Infinity, simTimeMs], [simTimeMs, Infinity]],
         updateTriggers: {
-          getPosition: [time],
-          getAngle: [time],
-          getColor: [time, selectedTripId],
+          getPosition: [simTimeMs],
+          getAngle: [simTimeMs],
+          getColor: [simTimeMs, selectedTripId],
         },
       }),
       // Dimming overlay - always present, fades via GPU transitions
@@ -830,7 +829,7 @@ export const BikeMap = () => {
               opacity: 0.75,
               pickable: false,
               updateTriggers: {
-                getColor: [time],
+                getColor: [simTimeMs],
               },
             }),
             // Selected bike head - rendered on top at full opacity
@@ -849,17 +848,17 @@ export const BikeMap = () => {
               pickable: false,
               extensions: [dataFilter],
               getFilterValue,
-              filterRange: [[-Infinity, time], [time, Infinity]],
+              filterRange: [[-Infinity, simTimeMs], [simTimeMs, Infinity]],
               updateTriggers: {
-                getPosition: [time],
-                getAngle: [time],
-                getColor: [time],
+                getPosition: [simTimeMs],
+                getAngle: [simTimeMs],
+                getColor: [simTimeMs],
               },
             }),
           ]
         : []),
     ];
-  }, [activeTrips, time, selectedTripId, selectedTripData, isPickingLocation, stations]);
+  }, [activeTrips, simTimeMs, selectedTripId, selectedTripData, isPickingLocation, stations]);
 
   const handleMapClick = useCallback(
     (info: { coordinate?: number[] }) => {
@@ -964,12 +963,12 @@ export const BikeMap = () => {
 
         {/* Time - absolutely centered */}
         <div className="absolute left-1/2 -translate-x-1/2 pointer-events-auto">
-          <TimeDisplay simulationTime={time} startDate={animationStartDate} />
+          <TimeDisplay simTimeMs={simTimeMs} realWindowStartDate={animationStartDate} />
         </div>
 
         {/* Stats - right */}
         <div className="pointer-events-none">
-          <ActiveRidesPanel ref={panelRef} graphData={graphData} currentTime={time} bearing={bearing} />
+          <ActiveRidesPanel ref={panelRef} graphData={graphData} simTimeMs={simTimeMs} bearing={bearing} />
           <AnimatePresence>
             {selectedTripInfo && <SelectedTripPanel info={selectedTripInfo} />}
           </AnimatePresence>

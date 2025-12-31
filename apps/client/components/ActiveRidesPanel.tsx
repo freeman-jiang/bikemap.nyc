@@ -1,10 +1,10 @@
-import { GRAPH_MIN_SCALE, GRAPH_WINDOW_SIZE_SECONDS } from "@/lib/config";
+import { GRAPH_MIN_SCALE, SIM_GRAPH_WINDOW_SIZE_MS } from "@/lib/config";
 import type { GraphDataPoint } from "@/lib/trip-types";
 import { forwardRef, memo, useImperativeHandle, useMemo, useRef } from "react";
 
 type ActiveRidesPanelProps = {
   graphData: GraphDataPoint[];
-  currentTime: number;
+  simTimeMs: number;
   bearing: number;
 };
 
@@ -19,7 +19,7 @@ const PADDING = { top: 4, right: 4, bottom: 14, left: 4 };
 
 export const ActiveRidesPanel = memo(
   forwardRef<ActiveRidesPanelRef, ActiveRidesPanelProps>(function ActiveRidesPanel(
-    { graphData, currentTime, bearing },
+    { graphData, simTimeMs, bearing },
     ref
   ) {
     const fpsRef = useRef<HTMLDivElement>(null);
@@ -35,10 +35,10 @@ export const ActiveRidesPanel = memo(
         return { linePath: "", areaPath: "", maxCount: 0 };
       }
 
-      const timeStart = currentTime - GRAPH_WINDOW_SIZE_SECONDS;
-      const timeEnd = currentTime;
+      const simWindowStartMs = simTimeMs - SIM_GRAPH_WINDOW_SIZE_MS;
+      const simWindowEndMs = simTimeMs;
 
-      const windowData = graphData.filter((d) => d.time >= timeStart && d.time <= timeEnd);
+      const windowData = graphData.filter((d) => d.simTimeMs >= simWindowStartMs && d.simTimeMs <= simWindowEndMs);
       if (windowData.length === 0) {
         return { linePath: "", areaPath: "", maxCount: 0 };
       }
@@ -48,14 +48,14 @@ export const ActiveRidesPanel = memo(
       const chartWidth = GRAPH_WIDTH - PADDING.left - PADDING.right;
       const chartHeight = GRAPH_HEIGHT - PADDING.top - PADDING.bottom;
 
-      const scaleX = (time: number) =>
-        PADDING.left + ((time - timeStart) / (timeEnd - timeStart)) * chartWidth;
+      const scaleX = (simTimeMs: number) =>
+        PADDING.left + ((simTimeMs - simWindowStartMs) / (simWindowEndMs - simWindowStartMs)) * chartWidth;
 
       const scaleY = (count: number) =>
         PADDING.top + chartHeight - (count / (maxCount * 1.1)) * chartHeight;
 
       const points = windowData.map((d) => ({
-        x: scaleX(d.time),
+        x: scaleX(d.simTimeMs),
         y: scaleY(d.count),
       }));
 
@@ -68,7 +68,7 @@ export const ActiveRidesPanel = memo(
         ` Z`;
 
       return { linePath, areaPath, maxCount };
-    }, [graphData, currentTime]);
+    }, [graphData, simTimeMs]);
 
     const hasData = linePath.length > 0;
 

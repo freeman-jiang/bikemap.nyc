@@ -16,16 +16,16 @@ export const DATA_END_DATE = new Date("2025-12-31T23:59:59Z");
 export const DEFAULT_SPEEDUP = 150;
 
 // =============================================================================
-// Data Pipeline (batch/chunk sizing)
+// Data Pipeline (batch/chunk sizing) - simulation time
 // =============================================================================
 
 // Chunk: how often deck.gl rebuilds geometry
-export const CHUNK_SIZE_SECONDS = 60 * 1;
+export const SIM_CHUNK_SIZE_MS = 60 * 1000; // 1 minute
 
 // Batch: how often we fetch from API + worker processes trips
-export const BATCH_SIZE_SECONDS = 30 * 60; // 1 hour
+export const SIM_BATCH_SIZE_MS = 30 * 60 * 1000; // 30 minutes
 
-export const CHUNKS_PER_BATCH = BATCH_SIZE_SECONDS / CHUNK_SIZE_SECONDS;
+export const CHUNKS_PER_BATCH = SIM_BATCH_SIZE_MS / SIM_CHUNK_SIZE_MS;
 
 // Prefetch config - start prefetching next batch at 80% through current batch
 export const PREFETCH_THRESHOLD_CHUNKS = Math.floor(CHUNKS_PER_BATCH * 0.8);
@@ -34,15 +34,15 @@ export const PREFETCH_THRESHOLD_CHUNKS = Math.floor(CHUNKS_PER_BATCH * 0.8);
 // Rendering (visual tuning)
 // =============================================================================
 
-export const TRAIL_LENGTH_SECONDS = 45;
+export const SIM_TRAIL_LENGTH_MS = 45 * 1000; // simulation time
 export const EASE_DISTANCE_METERS = 300;
 export const EASE_TIME_MULTIPLIER = 2; // How much longer ease zones take vs linear (2 = twice as slow)
 
-// Fade duration in real-time milliseconds
-export const FADE_DURATION_MS = 700;
+// Fade duration in real-time milliseconds (multiplied by speedup at usage)
+export const REAL_FADE_DURATION_MS = 700;
 
 // Max frame delta to prevent time jumps when returning from background tab (100ms = 10 FPS minimum)
-export const MAX_FRAME_DELTA_MS = 100;
+export const REAL_MAX_FRAME_DELTA_MS = 100;
 
 // =============================================================================
 // Map Configuration
@@ -60,7 +60,7 @@ export const INITIAL_VIEW_STATE = {
 // Graph Configuration
 // =============================================================================
 
-export const GRAPH_WINDOW_SIZE_SECONDS = 10800; // 3-hour rolling window
+export const SIM_GRAPH_WINDOW_SIZE_MS = 3 * 60 * 60 * 1000; // 3-hour rolling window (simulation time)
 export const GRAPH_MIN_SCALE = 100; // Minimum Y-axis scale (avoid jitter)
 
 // =============================================================================

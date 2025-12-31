@@ -22,7 +22,7 @@ type AnimationStore = {
 
   // Playback
   isPlaying: boolean
-  currentTime: number // simulation seconds from windowStart
+  simCurrentTimeMs: number // simulation ms from windowStart
   pendingAutoPlay: boolean // flag to auto-play after trips load
 
   // Loading state
@@ -39,8 +39,8 @@ type AnimationStore = {
   clearPendingAutoPlay: () => void
   play: () => void
   pause: () => void
-  setCurrentTime: (time: number) => void
-  advanceTime: (delta: number) => void
+  setSimCurrentTimeMs: (simTimeMs: number) => void
+  advanceSimTime: (deltaMs: number) => void
   resetPlayback: () => void
   selectTrip: (data: { id: string; info?: SelectedTripInfo | null } | null) => void
   setIsLoadingTrips: (loading: boolean) => void
@@ -53,7 +53,7 @@ export const useAnimationStore = create<AnimationStore>((set) => ({
 
   // Playback
   isPlaying: false,
-  currentTime: 0,
+  simCurrentTimeMs: 0,
   pendingAutoPlay: true, // Auto-play on initial page load
 
   // Loading state
@@ -64,17 +64,17 @@ export const useAnimationStore = create<AnimationStore>((set) => ({
   selectedTripInfo: null,
 
   // Config actions (reset playback when config changes)
-  setSpeedup: (speedup) => set({ speedup, isPlaying: false, currentTime: 0 }),
-  setAnimationStartDate: (animationStartDate) => set({ animationStartDate, isPlaying: false, currentTime: 0 }),
-  setAnimationStartDateAndPlay: (animationStartDate) => set({ animationStartDate, isPlaying: false, currentTime: 0, pendingAutoPlay: true }),
+  setSpeedup: (speedup) => set({ speedup, isPlaying: false, simCurrentTimeMs: 0 }),
+  setAnimationStartDate: (animationStartDate) => set({ animationStartDate, isPlaying: false, simCurrentTimeMs: 0 }),
+  setAnimationStartDateAndPlay: (animationStartDate) => set({ animationStartDate, isPlaying: false, simCurrentTimeMs: 0, pendingAutoPlay: true }),
   clearPendingAutoPlay: () => set({ pendingAutoPlay: false }),
 
   // Playback actions
   play: () => set({ isPlaying: true }),
   pause: () => set({ isPlaying: false }),
-  setCurrentTime: (currentTime) => set({ currentTime }),
-  advanceTime: (delta) => set((state) => ({ currentTime: state.currentTime + delta })),
-  resetPlayback: () => set({ isPlaying: false, currentTime: 0 }),
+  setSimCurrentTimeMs: (simCurrentTimeMs) => set({ simCurrentTimeMs }),
+  advanceSimTime: (deltaMs) => set((state) => ({ simCurrentTimeMs: state.simCurrentTimeMs + deltaMs })),
+  resetPlayback: () => set({ isPlaying: false, simCurrentTimeMs: 0 }),
 
   // Trip selection
   selectTrip: (data) => {

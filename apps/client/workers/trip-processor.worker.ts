@@ -4,11 +4,11 @@ import polyline from "@mapbox/polyline";
 import distance from "@turf/distance";
 import { point } from "@turf/helpers";
 import {
-  CHUNK_SIZE_SECONDS,
+  SIM_CHUNK_SIZE_MS,
   CHUNKS_PER_BATCH,
   EASE_DISTANCE_METERS,
   EASE_TIME_MULTIPLIER,
-  TRAIL_LENGTH_SECONDS,
+  SIM_TRAIL_LENGTH_MS,
 } from "../lib/config";
 import { filterTrips } from "../lib/trip-filters";
 import type {
@@ -24,8 +24,8 @@ import type {
 } from "../lib/trip-types";
 
 // === Worker State ===
-let windowStartMs = 0;
-let fadeDurationSimSeconds = 0;
+let realWindowStartMs = 0;
+let realFadeDurationMs = 0;
 let initialized = false;
 
 // Chunk index -> ProcessedTrip[]
@@ -70,10 +70,10 @@ function getTimeFraction(dist: number, totalDist: number): number {
 // === Prepare Trips for DeckGL ===
 function prepareTripsForDeck(data: {
   trips: TripWithRoute[];
-  windowStartMs: number;
-  fadeDurationSimSeconds: number;
+  realWindowStartMs: number;
+  realFadeDurationMs: number;
 }): ProcessedTrip[] {
-  const { trips, windowStartMs: winStart, fadeDurationSimSeconds: fadeDur } = data;
+  const { trips, realWindowStartMs: winStart, realFadeDurationMs: fadeDur } = data;
 
   // Filter trips (must have routeGeometry)
   const validTrips = filterTrips(trips) as Array<
@@ -108,22 +108,20 @@ function prepareTripsForDeck(data: {
 
       const totalDistance = cumulativeDistances[cumulativeDistances.length - 1];
 
-      // Convert to seconds from window start
-      const tripStartMs = trip.startedAt.getTime();
-      const tripEndMs = trip.endedAt.getTime();
-      const tripStartSeconds = (tripStartMs - winStart) / 1000;
-      const tripEndSeconds = (tripEndMs - winStart) / 1000;
-      const tripDurationSeconds = tripEndSeconds - tripStartSeconds;
+      // Convert to simulation ms from window start
+      const simTripStartMs = trip.startedAt.getTime() - winStart;
+      const simTripEndMs = trip.endedAt.getTime() - winStart;
+      const simTripDurationMs = simTripEndMs - simTripStartMs;
 
-      // Generate timestamps with easing
-      const timestamps = cumulativeDistances.map((dist) => {
+      // Generate timestamps with easing (simulation time)
+      const simTimestampsMs = cumulativeDistances.map((dist) => {
         const timeFraction = getTimeFraction(dist, totalDistance);
-        return tripStartSeconds + timeFraction * tripDurationSeconds;
+        return simTripStartMs + timeFraction * simTripDurationMs;
       });
 
-      // Precompute phase boundaries
-      const visibleStartSeconds = tripStartSeconds - fadeDur;
-      const fadeInEndSeconds = visibleStartSeconds + fadeDur;
+      // Precompute phase boundaries (simulation time)
+      const simVisibleStartMs = simTripStartMs - fadeDur;
+      const simFadeInEndMs = simVisibleStartMs + fadeDur;
 
       // Precompute fade-in bearing using 20m look-ahead
       const lookAheadDistPrep = Math.min(20, totalDistance);
@@ -162,16 +160,15 @@ function prepareTripsForDeck(data: {
       return {
         id: trip.id,
         path: coordinates,
-        timestamps,
+        simTimestampsMs,
         bikeType: trip.bikeType,
-        startTimeSeconds: tripStartSeconds,
-        endTimeSeconds: tripEndSeconds,
-        visibleStartSeconds,
-        visibleEndSeconds:
-          tripEndSeconds + Math.max(fadeDur, TRAIL_LENGTH_SECONDS),
+        simStartTimeMs: simTripStartMs,
+        simEndTimeMs: simTripEndMs,
+        simVisibleStartMs,
+        simVisibleEndMs: simTripEndMs + Math.max(fadeDur, SIM_TRAIL_LENGTH_MS),
         cumulativeDistances,
         lastSegmentIndex: 0,
-        fadeInEndSeconds,
+        simFadeInEndMs,
         firstSegmentBearing,
         lastSegmentBearing,
         // Mutable state - initialized here, updated by main thread
@@ -184,13 +181,13 @@ function prepareTripsForDeck(data: {
         currentHeadColor: [0, 0, 0, 0] as [number, number, number, number],
         currentPathColor: [0, 0, 0, 0] as [number, number, number, number],
         // Viewer-relative tracking (null = never seen by viewer)
-        viewerFirstSeenSeconds: null as number | null,
-        // Metadata for UI display
+        simViewerFirstSeenMs: null as number | null,
+        // Metadata for UI display (real timestamps)
         memberCasual: trip.memberCasual,
         startStationName: trip.startStationName,
         endStationName: trip.endStationName,
-        startedAtMs: tripStartMs,
-        endedAtMs: tripEndMs,
+        realStartedAtMs: trip.startedAt.getTime(),
+        realEndedAtMs: trip.endedAt.getTime(),
         routeDistance: trip.routeDistance,
       };
     })
@@ -202,8 +199,8 @@ function prepareTripsForDeck(data: {
 // === Message Handlers ===
 
 function handleInit(msg: InitMessage): void {
-  windowStartMs = msg.windowStartMs;
-  fadeDurationSimSeconds = msg.fadeDurationSimSeconds;
+  realWindowStartMs = msg.realWindowStartMs;
+  realFadeDurationMs = msg.realFadeDurationMs;
   initialized = true;
   post({ type: "ready" });
 }
@@ -223,14 +220,14 @@ function handleLoadBatch(msg: LoadBatchMessage): void {
   // Process all trips (heavy CPU work)
   const processed = prepareTripsForDeck({
     trips,
-    windowStartMs,
-    fadeDurationSimSeconds,
+    realWindowStartMs,
+    realFadeDurationMs,
   });
 
-  // Partition into 60-second chunks by visibleStartSeconds (not startTimeSeconds)
+  // Partition into chunks by simVisibleStartMs (not simStartTimeMs)
   // This ensures trips are delivered in time for their fade-in animation
   for (const trip of processed) {
-    const chunkIndex = Math.max(0, Math.floor(trip.visibleStartSeconds / CHUNK_SIZE_SECONDS));
+    const chunkIndex = Math.max(0, Math.floor(trip.simVisibleStartMs / SIM_CHUNK_SIZE_MS));
 
     if (!chunkMap.has(chunkIndex)) {
       chunkMap.set(chunkIndex, []);

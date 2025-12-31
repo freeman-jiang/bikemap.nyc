@@ -3,13 +3,13 @@ import { useAnimationStore } from "@/lib/stores/animation-store";
 import { AnimatePresence, motion } from "motion/react";
 
 type Props = {
-  simulationTime: number; // seconds from animation start
-  startDate: Date; // animation start date
+  simTimeMs: number; // simulation ms from animation start
+  realWindowStartDate: Date; // animation window start date (real time)
 };
 
-export function TimeDisplay({ simulationTime, startDate }: Props) {
+export function TimeDisplay({ simTimeMs, realWindowStartDate }: Props) {
   const isLoadingTrips = useAnimationStore((s) => s.isLoadingTrips);
-  const displayTimeMs = startDate.getTime() + simulationTime * 1000;
+  const realDisplayTimeMs = realWindowStartDate.getTime() + simTimeMs;
 
   return (
     <div className="bg-black/45 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 shadow-[0_0_24px_rgba(0,0,0,0.6)] flex flex-col items-center relative">
@@ -61,10 +61,10 @@ export function TimeDisplay({ simulationTime, startDate }: Props) {
         className="flex flex-col items-center"
       >
         <div className="text-white/90 text-xs tracking-wide font-mono">
-          {formatDateShort(displayTimeMs)}
+          {formatDateShort(realDisplayTimeMs)}
         </div>
         <div className="text-xl font-semibold tabular-nums text-white/90 tracking-tight">
-          {formatTimeOnly(displayTimeMs)}
+          {formatTimeOnly(realDisplayTimeMs)}
         </div>
       </motion.div>
     </div>

@@ -5,7 +5,7 @@
 // ============================================================================
 
 export type GraphDataPoint = {
-  time: number; // Simulation seconds from window start
+  simTimeMs: number; // Simulation ms from window start
   count: number; // Active trip count at this time
 };
 
@@ -42,16 +42,16 @@ export type Phase = "fading-in" | "moving" | "fading-out";
 export type ProcessedTrip = {
   id: string;
   path: [number, number][];
-  timestamps: number[]; // seconds from window start
+  simTimestampsMs: number[]; // simulation ms from window start
   bikeType: string;
-  startTimeSeconds: number; // actual trip start (movement begins after transition)
-  endTimeSeconds: number; // actual trip end (movement stops, fade-out begins)
-  visibleStartSeconds: number; // when bike first appears (fade-in starts)
-  visibleEndSeconds: number; // when bike disappears (fade-out ends)
+  simStartTimeMs: number; // actual trip start (movement begins after fade-in)
+  simEndTimeMs: number; // actual trip end (movement stops, fade-out begins)
+  simVisibleStartMs: number; // when bike first appears (fade-in starts)
+  simVisibleEndMs: number; // when bike disappears (fade-out ends)
   cumulativeDistances: number[]; // meters from route start
   lastSegmentIndex: number; // cached cursor for O(1) segment lookup
   // Precomputed phase boundary (avoid recalculating each frame)
-  fadeInEndSeconds: number;
+  simFadeInEndMs: number;
   // Precomputed bearings for stationary phases
   firstSegmentBearing: number;
   lastSegmentBearing: number;
@@ -65,13 +65,13 @@ export type ProcessedTrip = {
   currentHeadColor: [number, number, number, number];
   currentPathColor: [number, number, number, number];
   // Viewer-relative tracking (null = never seen by viewer)
-  viewerFirstSeenSeconds: number | null;
-  // Metadata for UI display
+  simViewerFirstSeenMs: number | null;
+  // Metadata for UI display (real timestamps for display)
   memberCasual: string;
   startStationName: string;
   endStationName: string;
-  startedAtMs: number;
-  endedAtMs: number;
+  realStartedAtMs: number;
+  realEndedAtMs: number;
   routeDistance: number | null;
 };
 
@@ -82,8 +82,8 @@ export type ProcessedTrip = {
 // Main Thread -> Worker
 export type InitMessage = {
   type: "init";
-  windowStartMs: number;
-  fadeDurationSimSeconds: number;
+  realWindowStartMs: number;
+  realFadeDurationMs: number;
 };
 
 export type LoadBatchMessage = {

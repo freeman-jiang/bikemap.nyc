@@ -1,6 +1,6 @@
 import {
-  BATCH_SIZE_SECONDS,
-  CHUNK_SIZE_SECONDS,
+  SIM_BATCH_SIZE_MS,
+  SIM_CHUNK_SIZE_MS,
   CHUNKS_PER_BATCH,
 } from "@/lib/config";
 import type {
@@ -12,9 +12,9 @@ import type {
 import { duckdbService } from "@/services/duckdb-service";
 
 export interface TripDataServiceConfig {
-  windowStartMs: number;
+  realWindowStartMs: number;
   animationStartDate: Date;
-  fadeDurationSimSeconds: number;
+  realFadeDurationMs: number;
 }
 
 /**
@@ -48,7 +48,7 @@ export class TripDataService {
    * Must be called before using other methods.
    */
   async init(): Promise<Map<string, ProcessedTrip>> {
-    const { windowStartMs, fadeDurationSimSeconds } = this.config;
+    const { realWindowStartMs, realFadeDurationMs } = this.config;
 
     console.log("[TripDataService] Initializing...");
 
@@ -76,8 +76,8 @@ export class TripDataService {
 
       this.post({
         type: "init",
-        windowStartMs,
-        fadeDurationSimSeconds,
+        realWindowStartMs,
+        realFadeDurationMs,
       });
     });
 
@@ -278,23 +278,23 @@ export class TripDataService {
   }
 
   private async fetchBatch(batchId: number): Promise<TripWithRoute[]> {
-    const { windowStartMs, animationStartDate } = this.config;
+    const { realWindowStartMs, animationStartDate } = this.config;
 
-    const batchStartMs = windowStartMs + batchId * BATCH_SIZE_SECONDS * 1000;
-    const batchEndMs = batchStartMs + BATCH_SIZE_SECONDS * 1000;
+    const realBatchStartMs = realWindowStartMs + batchId * SIM_BATCH_SIZE_MS;
+    const realBatchEndMs = realBatchStartMs + SIM_BATCH_SIZE_MS;
 
     console.log(`Fetching batch ${batchId} from DuckDB...`);
 
     const trips = await duckdbService.getTripsInRange({
-      from: new Date(batchStartMs),
-      to: new Date(batchEndMs),
+      from: new Date(realBatchStartMs),
+      to: new Date(realBatchEndMs),
     });
 
     // For batch 0, also fetch trips already in progress at animation start
     if (batchId === 0) {
       const overlapTrips = await duckdbService.getTripsOverlap({
         chunkStart: animationStartDate,
-        chunkEnd: new Date(windowStartMs + CHUNK_SIZE_SECONDS * 1000),
+        chunkEnd: new Date(realWindowStartMs + SIM_CHUNK_SIZE_MS),
       });
 
       // Merge and dedupe by id

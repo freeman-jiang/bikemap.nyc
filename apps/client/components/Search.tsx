@@ -3,7 +3,7 @@ import { EBike } from "@/components/icons/Ebike"
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command"
 import { Kbd } from "@/components/ui/kbd"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { DATA_END_DATE, DATA_START_DATE, FADE_DURATION_MS } from "@/lib/config"
+import { DATA_END_DATE, DATA_START_DATE, REAL_FADE_DURATION_MS } from "@/lib/config"
 import { formatDateTime, formatDateTimeFull, formatDistance, formatDurationMinutes } from "@/lib/format"
 import { useAnimationStore } from "@/lib/stores/animation-store"
 import { usePickerStore } from "@/lib/stores/location-picker-store"
@@ -58,19 +58,19 @@ export function Search() {
   const [isLoadingTrips, setIsLoadingTrips] = React.useState(false)
 
   const { pickedLocation, startPicking, clearPicking } = usePickerStore()
-  const { animationStartDate, currentTime } = useAnimationStore()
+  const { animationStartDate, simCurrentTimeMs } = useAnimationStore()
   const { stations, getStation, load: loadStations } = useStationsStore()
 
-  // Compute current simulation time for chrono reference
-  const currentSimulationTime = React.useMemo(() => {
-    return new Date(animationStartDate.getTime() + currentTime * 1000)
-  }, [animationStartDate, currentTime])
+  // Compute current real time (absolute) for chrono reference
+  const realCurrentTimeMs = React.useMemo(() => {
+    return new Date(animationStartDate.getTime() + simCurrentTimeMs)
+  }, [animationStartDate, simCurrentTimeMs])
 
-  // Parse datetime with chrono - uses current simulation time as reference for relative dates like "now"
+  // Parse datetime with chrono - uses current real time as reference for relative dates like "now"
   const parsedDate = React.useMemo(() => {
     if (!datetimeInput.trim()) return null
-    return chrono.parseDate(datetimeInput, currentSimulationTime)
-  }, [datetimeInput, currentSimulationTime])
+    return chrono.parseDate(datetimeInput, realCurrentTimeMs)
+  }, [datetimeInput, realCurrentTimeMs])
 
   // Check if parsed date is outside available data range
   const isDateOutOfRange = !!parsedDate && (parsedDate < DATA_START_DATE || parsedDate > DATA_END_DATE)
@@ -333,8 +333,8 @@ export function Search() {
     const { setAnimationStartDate, selectTrip, speedup } = useAnimationStore.getState()
 
     // Start animation at fade-in time (accounting for speedup)
-    const startTime = new Date(new Date(trip.startedAt).getTime() - FADE_DURATION_MS * speedup)
-    setAnimationStartDate(startTime)
+    const realStartTimeMs = new Date(new Date(trip.startedAt).getTime() - REAL_FADE_DURATION_MS * speedup)
+    setAnimationStartDate(realStartTimeMs)
 
     const endStation = getStation(trip.endStationName)
     if (!selectedStation) {
