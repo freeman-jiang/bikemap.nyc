@@ -702,15 +702,6 @@ export const BikeMap = () => {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [togglePlayPause, selectRandomBiker, toggleSettings, triggerButtonAnimation]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-      }
-    };
-  }, []);
-
   if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
     throw new Error("NEXT_PUBLIC_MAPBOX_TOKEN is not set");
   }
