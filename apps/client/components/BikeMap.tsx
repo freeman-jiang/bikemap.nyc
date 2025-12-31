@@ -16,7 +16,6 @@ import { createThrottledSampler } from "@/lib/misc";
 import { useAnimationStore } from "@/lib/stores/animation-store";
 import { usePickerStore } from "@/lib/stores/location-picker-store";
 import { useSearchStore } from "@/lib/stores/search-store";
-import { useSettingsStore } from "@/lib/stores/settings-store";
 import { useStationsStore, type Station } from "@/lib/stores/stations-store";
 import type { GraphDataPoint, Phase, ProcessedTrip } from "@/lib/trip-types";
 import { TripDataService } from "@/services/trip-data-service";
@@ -24,7 +23,7 @@ import { DataFilterExtension, DataFilterExtensionProps } from "@deck.gl/extensio
 import { TripsLayer } from "@deck.gl/geo-layers";
 import { IconLayer, PathLayer, ScatterplotLayer, SolidPolygonLayer } from "@deck.gl/layers";
 import { DeckGL } from "@deck.gl/react";
-import { Pause, Play, Search, Settings, Shuffle } from "lucide-react";
+import { Pause, Play, Search, Shuffle } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -318,7 +317,6 @@ export const BikeMap = () => {
   const { isPickingLocation, setPickedLocation, pickedLocation } = usePickerStore();
   const { getStation, load: loadStations, stations } = useStationsStore();
   const openSearch = useSearchStore((s) => s.open);
-  const toggleSettings = useSettingsStore((s) => s.toggle);
 
   // Detect Mac vs Windows/Linux for keyboard shortcut display
   const [isMac, setIsMac] = useState(true); // Default to Mac to avoid layout shift
@@ -370,7 +368,6 @@ export const BikeMap = () => {
   // Button refs for keyboard shortcut animations
   const playPauseButtonRef = useRef<HTMLButtonElement>(null);
   const randomButtonRef = useRef<HTMLButtonElement>(null);
-  const settingsButtonRef = useRef<HTMLButtonElement>(null);
 
   // Helper to trigger button press animation
   const triggerButtonAnimation = useCallback((ref: React.RefObject<HTMLButtonElement | null>) => {
@@ -676,7 +673,7 @@ export const BikeMap = () => {
     });
   }, [activeTrips, selectTrip, getStation, simTimeMs]);
 
-  // Keyboard shortcuts: Space for play/pause, R for random, S for settings
+  // Keyboard shortcuts: Space for play/pause, R for random
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if user is typing in an input
@@ -690,16 +687,12 @@ export const BikeMap = () => {
         e.preventDefault();
         selectRandomBiker();
         triggerButtonAnimation(randomButtonRef);
-      } else if (e.key.toLowerCase() === "i" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        toggleSettings();
-        triggerButtonAnimation(settingsButtonRef);
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [togglePlayPause, selectRandomBiker, toggleSettings, triggerButtonAnimation]);
+  }, [togglePlayPause, selectRandomBiker, triggerButtonAnimation]);
 
   if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
     throw new Error("NEXT_PUBLIC_MAPBOX_TOKEN is not set");
@@ -950,14 +943,6 @@ export const BikeMap = () => {
               Random
             </span>
             <Kbd className="bg-zinc-800 text-white/70">R</Kbd>
-          </MapControlButton>
-          {/* Settings button */}
-          <MapControlButton ref={settingsButtonRef} onClick={toggleSettings}>
-            <span className="flex items-center gap-1.5">
-              <Settings className="w-4 h-4" />
-              Settings
-            </span>
-            <Kbd className="bg-zinc-800 text-white/70">{isMac ? "⌘" : "Ctrl+"}I</Kbd>
           </MapControlButton>
         </div>
 
