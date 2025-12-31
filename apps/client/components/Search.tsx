@@ -38,19 +38,16 @@ type Trip = {
   routeDistance: number | null
 }
 
-type SearchStep = "datetime" | "station" | "results"
-
 const MAX_RESULTS = 15
 
 export function Search() {
-  const { isOpen, open: openSearch, toggle, close } = useSearchStore()
+  const { isOpen, open: openSearch, toggle, close, step, setStep } = useSearchStore()
   const [search, setSearch] = React.useState("")
 
   // Mode switching (ride search vs time jump)
   const [mode, setMode] = React.useState<SearchMode>("time")
 
   // Multi-step flow state
-  const [step, setStep] = React.useState<SearchStep>("datetime")
   const [selectedStation, setSelectedStation] = React.useState<Station | null>(null)
   const [datetimeInput, setDatetimeInput] = React.useState("")
   const [trips, setTrips] = React.useState<Trip[]>([])
@@ -113,7 +110,7 @@ export function Search() {
       focusInput()
     }
     // step === "datetime" falls through to default dialog close behavior
-  }, [step])
+  }, [step, setStep])
 
   React.useEffect(() => {
     loadStations()

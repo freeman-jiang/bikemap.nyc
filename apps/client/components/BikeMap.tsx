@@ -316,7 +316,7 @@ export const BikeMap = () => {
 
   const { isPickingLocation, setPickedLocation, pickedLocation } = usePickerStore();
   const { getStation, load: loadStations, stations } = useStationsStore();
-  const openSearch = useSearchStore((s) => s.open);
+  const { open: openSearch, step: searchStep } = useSearchStore();
 
   // Detect Mac vs Windows/Linux for keyboard shortcut display
   const [isMac, setIsMac] = useState(true); // Default to Mac to avoid layout shift
@@ -548,12 +548,13 @@ export const BikeMap = () => {
     storePause();
   }, [storePause]);
 
-  // Pause animation when entering picking mode
+  // Pause animation when showing stations (station/results step)
   useEffect(() => {
-    if (isPickingLocation && rafRef.current) {
+    const showStations = searchStep === "station" || searchStep === "results";
+    if (showStations && rafRef.current) {
       pause();
     }
-  }, [isPickingLocation, pause]);
+  }, [searchStep, pause]);
 
   // Toggle play/pause based on current state
   const togglePlayPause = useCallback(() => {
@@ -722,36 +723,38 @@ export const BikeMap = () => {
   }, [selectedTripId, activeTrips]);
 
   const layers = useMemo(() => {
-    // Show station dots when picking a location (GPU-accelerated)
-    if (isPickingLocation) {
-      return [
-        // Glow effect layer (larger, semi-transparent)
-        new ScatterplotLayer<Station>({
-          id: "stations-glow",
-          data: stations,
-          getPosition: (d) => [d.longitude, d.latitude],
-          getFillColor: [125, 207, 255, 60],
-          getRadius: 6,
-          radiusUnits: "pixels",
-          pickable: false,
-        }),
-        // Core dot layer
-        new ScatterplotLayer<Station>({
-          id: "stations",
-          data: stations,
-          getPosition: (d) => [d.longitude, d.latitude],
-          getFillColor: [125, 207, 255, 255],
-          getRadius: 2,
-          radiusUnits: "pixels",
-          pickable: false,
-        }),
-      ];
-    }
-
     const hasSelection = selectedTripData.length > 0;
+    // Show stations (hide bikes) during station selection and results steps
+    const showStations = searchStep === "station" || searchStep === "results";
 
     return [
-      // Trips layer - dimmed when selection active
+      // Station dots - fade in/out based on search step (GPU-accelerated transitions)
+      // Fade in: 700ms, Fade out: 200ms
+      new ScatterplotLayer<Station>({
+        id: "stations-glow",
+        data: stations,
+        getPosition: (d) => [d.longitude, d.latitude],
+        getFillColor: showStations ? [125, 207, 255, 60] : [125, 207, 255, 0],
+        getRadius: 6,
+        radiusUnits: "pixels",
+        pickable: false,
+        transitions: {
+          getFillColor: showStations ? 700 : 200,
+        },
+      }),
+      new ScatterplotLayer<Station>({
+        id: "stations",
+        data: stations,
+        getPosition: (d) => [d.longitude, d.latitude],
+        getFillColor: showStations ? [125, 207, 255, 255] : [125, 207, 255, 0],
+        getRadius: 2,
+        radiusUnits: "pixels",
+        pickable: false,
+        transitions: {
+          getFillColor: showStations ? 700 : 200,
+        },
+      }),
+      // Trips layer - dimmed when selection active, hidden during station/results steps
       // Uses DataFilterExtension to GPU-filter trips by visibility window
       new TripsLayer<ProcessedTrip, DataFilterExtensionProps<ProcessedTrip>>({
         id: "trips",
@@ -759,7 +762,7 @@ export const BikeMap = () => {
         getPath,
         getTimestamps,
         getColor: getTripColor,
-        opacity: 0.2,
+        opacity: showStations ? 0 : 0.2,
         widthMinPixels: 3,
         jointRounded: true,
         capRounded: true,
@@ -774,12 +777,15 @@ export const BikeMap = () => {
         updateTriggers: {
           getColor: [simTimeMs, selectedTripId],
         },
+        transitions: {
+          opacity: showStations ? 0 : 700,
+        },
       }),
       new IconLayer({
         id: "bike-heads",
         data: activeTrips,
         billboard: false,
-        opacity: 0.75,
+        opacity: showStations ? 0 : 0.75,
         getPosition: getBikeHeadPosition,
         getAngle: getBikeHeadAngle,
         getIcon: () => "arrow",
@@ -796,6 +802,9 @@ export const BikeMap = () => {
           getPosition: [simTimeMs],
           getAngle: [simTimeMs],
           getColor: [simTimeMs, selectedTripId],
+        },
+        transitions: {
+          opacity: showStations ? 0 : 700,
         },
       }),
       // Dimming overlay - always present, fades via GPU transitions
@@ -851,7 +860,7 @@ export const BikeMap = () => {
           ]
         : []),
     ];
-  }, [activeTrips, simTimeMs, selectedTripId, selectedTripData, isPickingLocation, stations]);
+  }, [activeTrips, simTimeMs, selectedTripId, selectedTripData, searchStep, stations]);
 
   const handleMapClick = useCallback(
     (info: { coordinate?: number[] }) => {
