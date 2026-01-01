@@ -627,6 +627,7 @@ export const BikeMap = () => {
         realWindowStartMs,
         animationStartDate,
         realFadeDurationMs,
+        onError: (error) => useAnimationStore.getState().setLoadError(error),
       });
 
       serviceRef.current = service;

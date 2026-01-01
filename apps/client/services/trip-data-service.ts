@@ -1,7 +1,7 @@
 import {
+  CHUNKS_PER_BATCH,
   SIM_BATCH_SIZE_MS,
   SIM_CHUNK_SIZE_MS,
-  CHUNKS_PER_BATCH,
 } from "@/lib/config";
 import type {
   MainToWorkerMessage,
@@ -11,10 +11,14 @@ import type {
 } from "@/lib/trip-types";
 import { duckdbService } from "@/services/duckdb-service";
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 3000;
+
 export interface TripDataServiceConfig {
   realWindowStartMs: number;
   animationStartDate: Date;
   realFadeDurationMs: number;
+  onError?: (error: string | null) => void;
 }
 
 /**
@@ -38,6 +42,8 @@ export class TripDataService {
     number,
     { resolve: () => void; reject: (error: unknown) => void }[]
   >();
+  private terminated = false;
+  private pendingRetryTimeouts = new Set<ReturnType<typeof setTimeout>>();
 
   constructor(config: TripDataServiceConfig) {
     this.config = config;
@@ -126,7 +132,10 @@ export class TripDataService {
   prefetchBatch(batchId: number): void {
     if (!this.loadedBatches.has(batchId) && !this.loadingBatches.has(batchId)) {
       this.loadBatch(batchId).catch((err) => {
-        console.error(`Prefetch batch ${batchId} failed:`, err);
+        // Don't report errors if service was terminated (e.g., user changed time)
+        if (this.terminated) return;
+        console.error(`Prefetch batch ${batchId} failed after ${MAX_RETRIES} retries:`, err);
+        this.config.onError?.(err instanceof Error ? err.message : "Failed to load trips");
       });
     }
   }
@@ -155,6 +164,12 @@ export class TripDataService {
    * Terminate the worker and clean up resources.
    */
   terminate(): void {
+    this.terminated = true;
+    // Clear any pending retry timeouts
+    for (const timeout of this.pendingRetryTimeouts) {
+      clearTimeout(timeout);
+    }
+    this.pendingRetryTimeouts.clear();
     this.worker?.terminate();
     this.worker = null;
     this.pendingChunkRequests.clear();
@@ -220,6 +235,10 @@ export class TripDataService {
       resolver([]); // Return empty array on error
     }
     this.pendingChunkRequests.clear();
+    // Surface error to UI
+    if (!this.terminated) {
+      this.config.onError?.("Worker crashed unexpectedly");
+    }
   }
 
   // ===========================================================================
@@ -244,8 +263,11 @@ export class TripDataService {
     console.log(`Loading batch ${batchId}...`);
 
     try {
-      // Fetch from server
-      const trips = await this.fetchBatch(batchId);
+      // Fetch from server with retry
+      const trips = await this.fetchBatchWithRetry(batchId);
+
+      // Clear any previous error on success
+      this.config.onError?.(null);
 
       // Send to worker for processing
       this.post({
@@ -275,6 +297,35 @@ export class TripDataService {
 
       throw error;
     }
+  }
+
+  private async fetchBatchWithRetry(batchId: number): Promise<TripWithRoute[]> {
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      if (this.terminated) {
+        throw new Error("Service terminated");
+      }
+
+      try {
+        return await this.fetchBatch(batchId);
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        console.warn(`Batch ${batchId} attempt ${attempt}/${MAX_RETRIES} failed:`, lastError.message);
+
+        if (attempt < MAX_RETRIES && !this.terminated) {
+          await new Promise<void>((resolve) => {
+            const timeout = setTimeout(() => {
+              this.pendingRetryTimeouts.delete(timeout);
+              resolve();
+            }, RETRY_DELAY_MS);
+            this.pendingRetryTimeouts.add(timeout);
+          });
+        }
+      }
+    }
+
+    throw lastError;
   }
 
   private async fetchBatch(batchId: number): Promise<TripWithRoute[]> {
