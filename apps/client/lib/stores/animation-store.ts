@@ -27,6 +27,7 @@ type AnimationStore = {
 
   // Loading state
   isLoadingTrips: boolean
+  loadError: string | null
 
   // Trip selection (shared between Search and BikeMap)
   selectedTripId: string | null
@@ -44,6 +45,7 @@ type AnimationStore = {
   resetPlayback: () => void
   selectTrip: (data: { id: string; info?: SelectedTripInfo | null } | null) => void
   setIsLoadingTrips: (loading: boolean) => void
+  setLoadError: (error: string | null) => void
 }
 
 export const useAnimationStore = create<AnimationStore>((set) => ({
@@ -58,6 +60,7 @@ export const useAnimationStore = create<AnimationStore>((set) => ({
 
   // Loading state
   isLoadingTrips: true,
+  loadError: null,
 
   // Trip selection
   selectedTripId: null,
@@ -90,4 +93,5 @@ export const useAnimationStore = create<AnimationStore>((set) => ({
 
   // Loading state
   setIsLoadingTrips: (isLoadingTrips) => set({ isLoadingTrips }),
+  setLoadError: (loadError) => set({ loadError }),
 }))

@@ -28,7 +28,7 @@ import { Pause, Play, Search, Shuffle } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Map as MapboxMap, Marker } from "react-map-gl/mapbox";
+import { Map as MapboxMap } from "react-map-gl/mapbox";
 import { ActiveRidesPanel } from "./ActiveRidesPanel";
 import { MapControlButton } from "./MapControlButton";
 import { SelectedTripPanel } from "./SelectedTripPanel";
@@ -617,6 +617,7 @@ export const BikeMap = () => {
     // Initialize/recreate service
     const initService = async () => {
       useAnimationStore.getState().setIsLoadingTrips(true);
+      useAnimationStore.getState().setLoadError(null);
 
       // Terminate old service if exists
       serviceRef.current?.terminate();
@@ -630,21 +631,28 @@ export const BikeMap = () => {
 
       serviceRef.current = service;
 
-      // Initialize and get initial trips
-      const initialTrips = await service.init();
+      try {
+        // Initialize and get initial trips
+        const initialTrips = await service.init();
 
-      // Copy to local ref
-      tripMapRef.current = initialTrips;
-      for (let i = 0; i <= 2; i++) {
-        loadedChunksRef.current.add(i);
+        // Copy to local ref
+        tripMapRef.current = initialTrips;
+        for (let i = 0; i <= 2; i++) {
+          loadedChunksRef.current.add(i);
+        }
+        lastBatchRef.current = 0;
+
+        setActiveTrips(Array.from(tripMapRef.current.values()));
+        useAnimationStore.getState().setIsLoadingTrips(false);
+
+        // Auto-play after trips load
+        play();
+      } catch (error) {
+        useAnimationStore.getState().setLoadError(
+          error instanceof Error ? error.message : "Failed to load trips"
+        );
+        useAnimationStore.getState().setIsLoadingTrips(false);
       }
-      lastBatchRef.current = 0;
-
-      setActiveTrips(Array.from(tripMapRef.current.values()));
-      useAnimationStore.getState().setIsLoadingTrips(false);
-
-      // Auto-play after trips load
-      play();
     };
 
     initService();

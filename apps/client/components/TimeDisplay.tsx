@@ -9,11 +9,14 @@ type Props = {
 
 export function TimeDisplay({ simTimeMs, realWindowStartDate }: Props) {
   const isLoadingTrips = useAnimationStore((s) => s.isLoadingTrips);
+  const loadError = useAnimationStore((s) => s.loadError);
   const realDisplayTimeMs = realWindowStartDate.getTime() + simTimeMs;
+
+  const showOverlay = isLoadingTrips || loadError;
 
   return (
     <div className="bg-black/45 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 shadow-[0_0_24px_rgba(0,0,0,0.6)] flex flex-col items-center relative">
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {isLoadingTrips && (
           <motion.div
             key="loading"
@@ -50,12 +53,29 @@ export function TimeDisplay({ simTimeMs, realWindowStartDate }: Props) {
             </div>
           </motion.div>
         )}
+        {loadError && !isLoadingTrips && (
+          <motion.div
+            key="error"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, ease: "easeInOut" }}
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-400 shadow-[0_0_6px_2px_rgba(248,113,113,0.4)]" />
+              <span className="text-red-400/90 text-xs font-medium">
+                {"Failed to load :("}
+              </span>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
       <motion.div
         initial={false}
         animate={{
-          opacity: isLoadingTrips ? 0 : 1,
-          filter: isLoadingTrips ? "blur(8px)" : "blur(0px)",
+          opacity: showOverlay ? 0 : 1,
+          filter: showOverlay ? "blur(8px)" : "blur(0px)",
         }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className="flex flex-col items-center"
