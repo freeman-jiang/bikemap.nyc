@@ -41,7 +41,7 @@ type Trip = {
 const MAX_RESULTS = 15
 
 export function Search() {
-  const { isOpen, open: openSearch, toggle, close, step, setStep } = useSearchStore()
+  const { isOpen, open: openSearch, toggle, close, step, setStep, datetimeHistory, addToHistory } = useSearchStore()
   const [search, setSearch] = React.useState("")
 
   // Mode switching (ride search vs time jump)
@@ -53,6 +53,10 @@ export function Search() {
   const [trips, setTrips] = React.useState<Trip[]>([])
   const [resultsSearch, setResultsSearch] = React.useState("")
   const [isLoadingTrips, setIsLoadingTrips] = React.useState(false)
+
+  // History navigation state
+  const [historyIndex, setHistoryIndex] = React.useState(-1)
+  const [savedInput, setSavedInput] = React.useState("")
 
   const { pickedLocation, startPicking } = usePickerStore()
   const { animationStartDate, simCurrentTimeMs } = useAnimationStore()
@@ -145,6 +149,8 @@ export function Search() {
       setDatetimeInput("")
       setSearch("")
       setTrips([])
+      setHistoryIndex(-1)
+      setSavedInput("")
     }
   }
 
@@ -306,6 +312,9 @@ export function Search() {
 
   const handleConfirmDatetime = () => {
     if (parsedDate) {
+      addToHistory(datetimeInput)
+      setHistoryIndex(-1)
+      setSavedInput("")
       setSearch("") // Clear station search for fresh input
       setStep("station")
       focusInput()
@@ -314,6 +323,9 @@ export function Search() {
 
   const handleJumpToTime = () => {
     if (!parsedDate) return
+    addToHistory(datetimeInput)
+    setHistoryIndex(-1)
+    setSavedInput("")
     // Skip if jumping to the same time (e.g., "now" when already at that time)
     if (parsedDate.getTime() === animationStartDate.getTime()) {
       handleOpenChange(false)
@@ -321,6 +333,38 @@ export function Search() {
     }
     useAnimationStore.getState().setAnimationStartDateAndPlay(parsedDate)
     handleOpenChange(false)
+  }
+
+  // Handle up/down arrow keys for history navigation
+  const handleDatetimeKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowUp") {
+      e.preventDefault()
+      if (datetimeHistory.length === 0) return
+      if (historyIndex === -1) {
+        // Save current input before navigating
+        setSavedInput(datetimeInput)
+      }
+      const newIndex = Math.min(historyIndex + 1, datetimeHistory.length - 1)
+      setHistoryIndex(newIndex)
+      setDatetimeInput(datetimeHistory[newIndex])
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault()
+      if (historyIndex === -1) return
+      const newIndex = historyIndex - 1
+      setHistoryIndex(newIndex)
+      if (newIndex === -1) {
+        // Restore saved input
+        setDatetimeInput(savedInput)
+      } else {
+        setDatetimeInput(datetimeHistory[newIndex])
+      }
+    }
+  }
+
+  // Reset history navigation when input changes manually
+  const handleDatetimeChange = (value: string) => {
+    setDatetimeInput(value)
+    setHistoryIndex(-1)
   }
 
   const handleSelectTrip = (trip: Trip) => {
@@ -381,7 +425,8 @@ export function Search() {
           autoFocus
           placeholder={mode === "ride" ? "When did this ride start?" : "What time do you want to jump to?"}
           value={datetimeInput}
-          onValueChange={setDatetimeInput}
+          onValueChange={handleDatetimeChange}
+          onKeyDown={handleDatetimeKeyDown}
           icon={mode === "ride" ? <SearchIcon className="size-4 shrink-0 text-muted-foreground" /> : <CalendarSearch className="size-4 shrink-0 text-muted-foreground" />}
         />
         <div className="px-3 py-2 text-xs text-zinc-500 flex flex-col gap-0.5">
