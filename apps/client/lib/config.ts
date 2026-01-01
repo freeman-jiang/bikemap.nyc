@@ -12,7 +12,7 @@ export const DATA_START_DATE = new Date("2013-06-01T00:00:00-04:00"); // EDT
 export const DATA_END_DATE = new Date("2025-12-31T23:59:59-05:00");   // EST
 
 // Default speedup multiplier for animation
-export const DEFAULT_SPEEDUP = 150;
+export const DEFAULT_SPEEDUP = 150 * 1;
 
 // =============================================================================
 // Data Pipeline (batch/chunk sizing) - simulation time
@@ -36,7 +36,7 @@ export const NUM_LOOKAHEAD_BATCHES = 2;
 // Rendering (visual tuning)
 // =============================================================================
 
-export const SIM_TRAIL_LENGTH_MS = 45 * 1000; // simulation time
+export const SIM_TRAIL_LENGTH_MS = 1.5 * 45 * 1000; // simulation time
 export const EASE_DISTANCE_METERS = 300;
 export const EASE_TIME_MULTIPLIER = 2; // How much longer ease zones take vs linear (2 = twice as slow)
 
