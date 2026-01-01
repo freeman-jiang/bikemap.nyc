@@ -907,7 +907,7 @@ export const BikeMap = () => {
       <DeckGL
         layers={layers}
         initialViewState={initialViewState}
-        controller={true}
+        controller={{ touchRotate: true }}
         onClick={handleMapClick}
         onViewStateChange={({ viewState }) => {
           // Capture bearing before the microtask so TS keeps the narrowing.
