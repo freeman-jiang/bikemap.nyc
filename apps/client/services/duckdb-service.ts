@@ -1,3 +1,4 @@
+import { DATA_END_DATE, DATA_START_DATE } from "@/lib/config";
 import type { TripWithRoute } from "@/lib/trip-types";
 import * as duckdb from "@duckdb/duckdb-wasm";
 
@@ -11,9 +12,14 @@ function getMonthKey(date: Date): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
+// Valid data range boundaries (derived from config)
+const DATA_START_MONTH = getMonthKey(DATA_START_DATE);
+const DATA_END_MONTH = getMonthKey(DATA_END_DATE);
+
 /**
  * Get the list of months that overlap with a date range
  * Uses UTC to match parquet file naming convention
+ * Filters to only include months within the valid data range
  */
 function getMonthsForRange(from: Date, to: Date): string[] {
   const months: string[] = [];
@@ -24,7 +30,9 @@ function getMonthsForRange(from: Date, to: Date): string[] {
     months.push(getMonthKey(current));
     current.setUTCMonth(current.getUTCMonth() + 1);
   }
-  return months;
+
+  // Filter to valid data range (prevents loading non-existent parquet files)
+  return months.filter((m) => m >= DATA_START_MONTH && m <= DATA_END_MONTH);
 }
 
 /**
