@@ -433,7 +433,7 @@ export function Search() {
           <span>Processed <a href="https://citibikenyc.com/" target="_blank" className="underline hover:text-zinc-50 text-zinc-300 font-medium">Citi Bike</a> data spans June 2013 – December 2025.</span>
           <span>{'Try "July 4th 2019 at 8pm" or "Fri 4pm"'}</span>
         </div>
-        <CommandList>
+        <CommandList className="overflow-hidden">
           <AnimatePresence mode="wait">
             {parsedDate && (
               <motion.div
