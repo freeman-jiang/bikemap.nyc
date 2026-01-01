@@ -406,13 +406,13 @@ export function Search() {
       <CommandDialog open={isOpen} onOpenChange={handleOpenChange} onEscapeKeyDown={handleEscapeKeyDown} shouldFilter={false} className="sm:max-w-xl">
         <div className="flex items-center px-3 py-2 border-b pr-10">
           <Tabs value={mode} onValueChange={(v) => setMode(v as SearchMode)} >
-            <TabsList className="bg-[#1c1c1f]">
-              <TabsTrigger value="time" className="data-[state=active]:bg-zinc-800">
-                <History className="size-3.5" />
+            <TabsList className="bg-[#1c1c1f] h-10 sm:h-9">
+              <TabsTrigger value="time" className="data-[state=active]:bg-zinc-800 px-3 py-1.5 sm:px-2 sm:py-1">
+                <History className="size-4 sm:size-3.5" />
                 Time travel
               </TabsTrigger>
-              <TabsTrigger value="ride" className="data-[state=active]:bg-zinc-800">
-                <SearchIcon className="size-3.5" />
+              <TabsTrigger value="ride" className="data-[state=active]:bg-zinc-800 px-3 py-1.5 sm:px-2 sm:py-1">
+                <SearchIcon className="size-4 sm:size-3.5" />
                 Find ride
               </TabsTrigger>
             </TabsList>
