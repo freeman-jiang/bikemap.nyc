@@ -1,7 +1,7 @@
 import type { TripWithRoute } from "@/lib/trip-types";
 import * as duckdb from "@duckdb/duckdb-wasm";
 
-const TRIPS_BASE_URL = "https://bikemap.storage.googleapis.com";
+const TRIPS_BASE_URL = "https://cdn.bikemap.nyc";
 
 /**
  * Get month key from a date (e.g., "2025-09")
