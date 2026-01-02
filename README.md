@@ -42,20 +42,22 @@ This project uses [Bun workspaces](https://bun.sh/docs/install/workspaces).
 | `apps/client`          | Next.js frontend with deck.gl visualization      |
 | `packages/processing`  | Data pipeline scripts (stations, routes, parquet)|
 
-Fill in the `.env` file in `apps/client` with:
+**1. Set up environment variables**
+
+Copy `.env.example` to `.env` in `apps/client` and add your Mapbox token:
 
 ```sh
 NEXT_PUBLIC_MAPBOX_TOKEN=pk.xxx  # Get one at https://mapbox.com
 ```
 
-Run the following commands to start the client:
+**2. Install dependencies and run**
 
 ```sh
 bun install
 bun dev
 ```
 
-See the [processing README](packages/processing/README.md) for instructions on how to run the data pipeline.
+**Note:** The client queries parquet files from the official hosted CDN by default. You don't need to run the processing pipeline unless you want to regenerate the data. See the [processing README](packages/processing/README.md) for how to run the pipeline.
 
 ## Why
 
