@@ -35,16 +35,9 @@ This is what you see when you visit [bikemap.nyc](https://bikemap.nyc).
 
 ## Quickstart
 
-This project uses [Bun workspaces](https://bun.sh/docs/install/workspaces).
-
-| Directory              | Purpose                                          |
-| ---------------------- | ------------------------------------------------ |
-| `apps/client`          | Next.js frontend with deck.gl visualization      |
-| `packages/processing`  | Data pipeline scripts (stations, routes, parquet)|
-
 **1. Set up environment variables**
 
-Copy `.env.example` to `.env` in `apps/client` and add your Mapbox token:
+Create a `.env` file in `apps/client` and add your Mapbox token:
 
 ```sh
 NEXT_PUBLIC_MAPBOX_TOKEN=pk.xxx  # Get one at https://mapbox.com
