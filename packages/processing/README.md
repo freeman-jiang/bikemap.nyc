@@ -25,8 +25,6 @@ mkdir -p data
 s5cmd --no-sign-request cp 's3://tripdata/*.zip' data/
 ```
 
-This downloads ~30GB of zip files covering 2013-present.
-
 ### 2. Download NYC Neighborhoods GeoJSON
 
 Required for station geocoding (borough/neighborhood lookup):
