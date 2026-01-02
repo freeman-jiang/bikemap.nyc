@@ -109,7 +109,7 @@ export default function AboutPage() {
           <h2 className="text-lg font-medium text-white">Why</h2>
 
           <p>
-            {"There is no economic value for this project except that I think it is cool and beautiful. I hope you find it also so :)"}
+            {"There is no economic value for this project except that I think it is cool and beautiful :)"}
           </p>
 
           <p>
