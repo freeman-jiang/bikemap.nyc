@@ -55,7 +55,7 @@ export default function AboutPage() {
 
         <div className="space-y-6 text-zinc-400">
           <p>
-            This is a GPU-powered visualization of 12 years of{" "}
+            bikemap.nyc is a GPU-powered visualization of 12 years of{" "}
             <a
               href="https://citibikenyc.com"
               className="text-zinc-300 font-medium hover:text-zinc-100 underline underline-offset-4"
@@ -66,7 +66,7 @@ export default function AboutPage() {
           </p>
 
           <p>
-            Lyft provides anonymized{" "}
+          Each moving arrow is a bike ride that a real human took, based on the anonymized{" "}
             <a
               href="https://citibikenyc.com/system-data"
              
@@ -74,12 +74,11 @@ export default function AboutPage() {
             >
               historical system data
             </a>{" "}
-            {`for Citi Bike, NYC's bike-sharing system and the largest one in the US. In the animation, each moving arrow is a unique bike ride that a human took. The animation plays at ${DEFAULT_SPEEDUP}x normal speed and covers 180M+ trips since 2013.`}
+            {`that Lyft provides for Citi Bike, NYC's bike-sharing system. The animation plays at ${DEFAULT_SPEEDUP}x normal speed and covers 180M+ trips since 2013.`}
           </p>
 
           <p>
-            If you have ever used Citi Bike before, your ride is likely here. Use your Citi Bike receipt to search for and
-            find your ride.
+            If you have ever used Citi Bike before, your ride is likely here. Use your Citi Bike receipt to search for and find your ride.
           </p>
 
           <hr className="border-white/10" />
