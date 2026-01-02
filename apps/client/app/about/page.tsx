@@ -148,7 +148,7 @@ export default function AboutPage() {
           </p>
 
           <p>
-             {"I hope to keep this project free to use, but I am paying for Mapbox and hosting costs out of pocket. If you'd like to support me, please consider "}
+             {"I hope to keep this project running indefinitely, but I'm paying for Mapbox and hosting costs out of pocket. If you'd like to support me, please consider "}
             <a
               href="https://buymeacoffee.com/freemanjiang"
              

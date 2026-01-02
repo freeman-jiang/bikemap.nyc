@@ -63,4 +63,4 @@ bun dev
 
 There is no economic value for this project except that I think it is cool and beautiful :)
 
-I hope to keep this project free to use, but I am paying for Mapbox and hosting costs out of pocket. If you'd like to support me, please consider [buying me a coffee](https://buymeacoffee.com/freemanjiang)!
+I hope to keep this project running indefinitely, but I'm paying for Mapbox and hosting costs out of pocket. If you'd like to support me, please consider [buying me a coffee](https://buymeacoffee.com/freemanjiang)!
