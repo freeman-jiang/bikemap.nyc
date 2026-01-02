@@ -55,26 +55,25 @@ export default function AboutPage() {
 
         <div className="space-y-6 text-zinc-400">
           <p>
-            bikemap.nyc is a GPU-powered visualization of 12 years of{" "}
+            bikemap.nyc is a GPU-powered visualization of{" "}
             <a
               href="https://citibikenyc.com"
               className="text-zinc-300 font-medium hover:text-zinc-100 underline underline-offset-4"
             >
               Citi Bike
-            </a>{" "}
-            data in New York City.
+            </a>
+            , the largest bike-sharing system in the US.
           </p>
 
           <p>
-          Each moving arrow is a bike ride that a real human took, based on the anonymized{" "}
+            Each moving arrow represents a real bike ride, based on anonymized{" "}
             <a
               href="https://citibikenyc.com/system-data"
-             
               className="text-zinc-300 font-medium hover:text-zinc-100 underline underline-offset-4"
             >
               historical system data
             </a>{" "}
-            {`that Lyft provides for Citi Bike, NYC's bike-sharing system. The animation plays at ${DEFAULT_SPEEDUP}x normal speed and covers 180M+ trips since 2013.`}
+            {`that Lyft publicly provides. The animation plays at ${DEFAULT_SPEEDUP}x normal speed and covers 180M+ trips in New York City since 2013.`}
           </p>
 
           <p>
@@ -87,8 +86,8 @@ export default function AboutPage() {
 
           <p>
             The data only contains the start and end station for each trip, but
-            does not contain the exact route. Instead,
-             route geometries are precomputed using the shortest path from{" "}
+            does not contain the exact route. Thus,
+             route geometries are computed using the shortest path from{" "}
             <a
               href="https://project-osrm.org/"
              
@@ -100,7 +99,7 @@ export default function AboutPage() {
           </p>
 
           <p>
-            This means that calculated routes are directionally correct
+            This means that the calculated routes are directionally correct
             but inexact, and trips that start and end at the same station are
             filtered out since the route geometry is ambiguous.
           </p>
@@ -110,7 +109,7 @@ export default function AboutPage() {
           <h2 className="text-lg font-medium text-white">Why</h2>
 
           <p>
-            {"There is no economic value for this project except that I think it is cool and beautiful. I hope you find it so too :)"}
+            {"There is no economic value for this project except that I think it is cool and beautiful. I hope you find it also so :)"}
           </p>
 
           <p>
