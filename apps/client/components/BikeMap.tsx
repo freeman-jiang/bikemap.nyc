@@ -29,7 +29,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Map as MapboxMap } from "react-map-gl/mapbox";
-import { ActiveRidesPanel } from "./ActiveRidesPanel";
+import { ActiveRidesPanel, type ActiveRidesPanelRef } from "./ActiveRidesPanel";
 import { MapControlButton } from "./MapControlButton";
 import { SelectedTripPanel } from "./SelectedTripPanel";
 import { TimeDisplay } from "./TimeDisplay";
@@ -353,7 +353,7 @@ export const BikeMap = () => {
 
   const rafRef = useRef<number | null>(null);
   const lastTimestampRef = useRef<number | null>(null);
-  const panelRef = useRef<{ fps: HTMLDivElement | null; rides: HTMLSpanElement | null }>(null);
+  const panelRef = useRef<ActiveRidesPanelRef>(null);
   const smoothedFpsRef = useRef(60);
   const visibleCountRef = useRef(0);
   const tripMapRef = useRef<Map<string, ProcessedTrip>>(new Map());
@@ -477,8 +477,14 @@ export const BikeMap = () => {
           if (panelRef.current?.fps) {
             panelRef.current.fps.textContent = `${Math.round(smoothedFpsRef.current)} FPS`;
           }
+          if (panelRef.current?.mobileFps) {
+            panelRef.current.mobileFps.textContent = `${Math.round(smoothedFpsRef.current)}`;
+          }
           if (panelRef.current?.rides) {
             panelRef.current.rides.textContent = visibleCountRef.current.toLocaleString();
+          }
+          if (panelRef.current?.mobileRides) {
+            panelRef.current.mobileRides.textContent = visibleCountRef.current.toLocaleString();
           }
         });
 

@@ -11,6 +11,8 @@ type ActiveRidesPanelProps = {
 export type ActiveRidesPanelRef = {
   fps: HTMLDivElement | null;
   rides: HTMLSpanElement | null;
+  mobileFps: HTMLDivElement | null;
+  mobileRides: HTMLSpanElement | null;
 };
 
 const GRAPH_WIDTH = 176;
@@ -24,10 +26,14 @@ export const ActiveRidesPanel = memo(
   ) {
     const fpsRef = useRef<HTMLDivElement>(null);
     const ridesRef = useRef<HTMLSpanElement>(null);
+    const mobileFpsRef = useRef<HTMLDivElement>(null);
+    const mobileRidesRef = useRef<HTMLSpanElement>(null);
 
     useImperativeHandle(ref, () => ({
       fps: fpsRef.current,
       rides: ridesRef.current,
+      mobileFps: mobileFpsRef.current,
+      mobileRides: mobileRidesRef.current,
     }));
 
     const { linePath, areaPath, maxCount } = useMemo(() => {
@@ -73,7 +79,20 @@ export const ActiveRidesPanel = memo(
     const hasData = linePath.length > 0;
 
     return (
-      <div className="hidden sm:block bg-black/45 backdrop-blur-md text-white/90 px-3 py-2 rounded-xl border border-white/10 shadow-[0_0_24px_rgba(0,0,0,0.6)] w-[200px] relative">
+      <>
+        {/* Mobile-only compact display - fixed top right */}
+        <div className="sm:hidden fixed top-3 right-1 z-10 bg-black/30 backdrop-blur-sm text-white/80 px-1.5 py-1 rounded-lg text-right text-[10px]">
+          <div className="flex items-baseline justify-end gap-0.5">
+            <span ref={mobileRidesRef} className="tabular-nums">--</span>
+            <span className="text-white/50">rides</span>
+          </div>
+          <div className="flex items-baseline justify-end gap-0.5 text-white/40">
+            <span ref={mobileFpsRef} className="tabular-nums">--</span>
+            <span>fps</span>
+          </div>
+        </div>
+        {/* Desktop panel */}
+        <div className="hidden sm:block bg-black/45 backdrop-blur-md text-white/90 px-3 py-2 rounded-xl border border-white/10 shadow-[0_0_24px_rgba(0,0,0,0.6)] w-[200px] relative">
         {/* Compass */}
         <div
           className="absolute top-2 right-2"
@@ -181,6 +200,7 @@ export const ActiveRidesPanel = memo(
           </svg>
         </div>
       </div>
+      </>
     );
   })
 );
