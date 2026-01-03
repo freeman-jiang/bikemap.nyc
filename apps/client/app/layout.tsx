@@ -27,12 +27,22 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Freeman Jiang", url: "https://freemanjiang.com" }],
   creator: "Freeman Jiang",
+  openGraph: {
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+      },
+    ],
+  },
   twitter: {
     card: "summary_large_image",
     title: "bikemap.nyc",
     description:
       "Visualization of the entire history of Citi Bike, the largest bike-sharing system in the US.",
     creator: "@freemanjiangg",
+    images: ["/opengraph-image.png"],
   },
   };
 
