@@ -100,7 +100,7 @@ export default function AboutPage() {
 
           <p>
             This means that the calculated routes are directionally correct
-            but inexact, and trips that start and end at the same station are
+            but inexact. Trips that start and end at the same station are
             filtered out since the route geometry is ambiguous.
           </p>
 
