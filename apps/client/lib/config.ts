@@ -2,10 +2,10 @@
 // Animation Defaults
 // =============================================================================
 
-import { Color } from "@deck.gl/core";
+import { Color, MapViewState } from "@deck.gl/core";
 
 // Default animation start date for trip data timeframe (NYC time)
-export const DEFAULT_ANIMATION_START_DATE = new Date("2025-02-02T09:41:00-05:00"); // EST
+export const DEFAULT_ANIMATION_START_DATE = new Date("2025-01-01T09:41:00-05:00"); // EST
 
 // Valid data range for Citi Bike data (NYC time)
 export const DATA_START_DATE = new Date("2013-06-01T00:00:00-04:00"); // EDT
@@ -50,11 +50,11 @@ export const REAL_MAX_FRAME_DELTA_MS = 100;
 // Map Configuration
 // =============================================================================
 
-export const INITIAL_VIEW_STATE = {
-  longitude: -73.9903, // Manhattan Bridge center
-  latitude: 40.7074,
+export const INITIAL_VIEW_STATE: MapViewState = {
+  longitude: -73.965, 
+  latitude: 40.71,
   zoom: 13,
-  pitch: 0, // Bird's eye view (straight down)
+  pitch: 0,
   bearing: 0,
 };
 
