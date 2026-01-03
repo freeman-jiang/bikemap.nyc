@@ -314,6 +314,7 @@ export const BikeMap = () => {
   const [initialViewState, setInitialViewState] = useState<MapViewState>(INITIAL_VIEW_STATE);
   const [graphData, setGraphData] = useState<GraphDataPoint[]>([]);
   const [bearing, setBearing] = useState(0);
+  const [showHud, setShowHud] = useState(true);
 
   const { isPickingLocation, setPickedLocation, pickedLocation } = usePickerStore();
   const { getStation, load: loadStations, stations } = useStationsStore();
@@ -586,6 +587,10 @@ export const BikeMap = () => {
     }
   }, [play, pause, resume]);
 
+  const toggleHud = useCallback(() => {
+    setShowHud((prev) => !prev);
+  }, []);
+
   // Initialize service and reload when config changes
   const configRef = useRef<{ realWindowStartMs: number; speedup: number } | null>(null);
   useEffect(() => {
@@ -719,12 +724,15 @@ export const BikeMap = () => {
       } else if (e.key.toLowerCase() === "a" && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         window.location.href = "/about";
+      } else if (e.key.toLowerCase() === "h" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        toggleHud();
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [togglePlayPause, selectRandomBiker, triggerButtonAnimation]);
+  }, [togglePlayPause, selectRandomBiker, triggerButtonAnimation, toggleHud]);
 
 
   if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
@@ -932,7 +940,8 @@ export const BikeMap = () => {
         </MapboxMap>
       </DeckGL>
 
-      {/* HUD - top bar */}
+      {/* HUD - top bar (toggle with H key) */}
+      {showHud && (
       <div className="absolute top-3 inset-x-0 z-10 flex items-start justify-between px-3 pointer-events-none">
         {/* Controls - bottom-right on mobile, top-left on desktop */}
         <div className="fixed bottom-4 right-3 z-20 sm:static sm:z-auto grid grid-cols-2 gap-1.5 sm:flex sm:flex-col sm:gap-1 pointer-events-auto">
@@ -1016,6 +1025,7 @@ export const BikeMap = () => {
           </AnimatePresence>
         </div>
       </div>
+      )}
     </div>
   );
 };
