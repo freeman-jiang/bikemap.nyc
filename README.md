@@ -7,9 +7,10 @@
 Each moving arrow represents a real bike ride, based on anonymized [historical system data](https://citibikenyc.com/system-data) published by Lyft.
 
 ## Features
-- Visualizes 200M+ Citi Bike trips from 2013 to present
-- Jump to any moment in history or search for a specific ride
+- Natural language date parsing to jump to any moment in history
+- Search for individual rides by date and station name
 - Full keyboard controls for playback and navigation
+- Coverage of more than 200 million trips from 2013 to present
 
 ## How it works 
 
