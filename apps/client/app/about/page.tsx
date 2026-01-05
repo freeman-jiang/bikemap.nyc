@@ -46,8 +46,9 @@ export default function AboutPage() {
         </a>
         <h1 className="text-3xl font-semibold text-zinc-100 mb-8">
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-          <a href="/" className="hover:text-white transition-colors">
-            bikemap.nyc
+          <a href="/" className="inline-flex items-center gap-2.5 hover:text-white transition-colors">
+            <img src="/icon.svg" alt="" width={30} height={30} />
+            <span>bikemap.nyc</span>
           </a>
         </h1>
 
