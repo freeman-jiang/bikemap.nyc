@@ -326,11 +326,6 @@ export function Search() {
     addToHistory(datetimeInput)
     setHistoryIndex(-1)
     setSavedInput("")
-    // Skip if jumping to the same time (e.g., "now" when already at that time)
-    if (parsedDate.getTime() === animationStartDate.getTime()) {
-      handleOpenChange(false)
-      return
-    }
     useAnimationStore.getState().setAnimationStartDateAndPlay(parsedDate)
     handleOpenChange(false)
   }

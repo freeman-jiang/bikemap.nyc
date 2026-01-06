@@ -32,6 +32,7 @@ type AnimationStore = {
   // Trip selection (shared between Search and BikeMap)
   selectedTripId: string | null
   selectedTripInfo: SelectedTripInfo | null
+  dateSelectionKey: number // Increments on each date selection to force config reload
 
   // Actions
   setSpeedup: (value: number) => void
@@ -65,11 +66,23 @@ export const useAnimationStore = create<AnimationStore>((set) => ({
   // Trip selection
   selectedTripId: null,
   selectedTripInfo: null,
+  dateSelectionKey: 0,
 
   // Config actions (reset playback when config changes)
   setSpeedup: (speedup) => set({ speedup, isPlaying: false, simCurrentTimeMs: 0 }),
-  setAnimationStartDate: (animationStartDate) => set({ animationStartDate, isPlaying: false, simCurrentTimeMs: 0 }),
-  setAnimationStartDateAndPlay: (animationStartDate) => set({ animationStartDate, isPlaying: false, simCurrentTimeMs: 0, pendingAutoPlay: true }),
+  setAnimationStartDate: (animationStartDate) => set((state) => ({
+    animationStartDate,
+    isPlaying: false,
+    simCurrentTimeMs: 0,
+    dateSelectionKey: state.dateSelectionKey + 1,
+  })),
+  setAnimationStartDateAndPlay: (animationStartDate) => set((state) => ({
+    animationStartDate,
+    isPlaying: false,
+    simCurrentTimeMs: 0,
+    pendingAutoPlay: true,
+    dateSelectionKey: state.dateSelectionKey + 1,
+  })),
   clearPendingAutoPlay: () => set({ pendingAutoPlay: false }),
 
   // Playback actions

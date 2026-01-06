@@ -322,6 +322,7 @@ export const BikeMap = () => {
   const selectedTripId = useAnimationStore((s) => s.selectedTripId);
   const selectedTripInfo = useAnimationStore((s) => s.selectedTripInfo);
   const selectTrip = useAnimationStore((s) => s.selectTrip);
+  const dateSelectionKey = useAnimationStore((s) => s.dateSelectionKey);
 
   // Derived values (computed at consumption time)
   const realWindowStartMs = animationStartDate.getTime();
@@ -612,14 +613,17 @@ export const BikeMap = () => {
   }, []);
 
   // Initialize service and reload when config changes
-  const configRef = useRef<{ realWindowStartMs: number; speedup: number } | null>(null);
+  const configRef = useRef<{ realWindowStartMs: number; speedup: number; dateSelectionKey: number } | null>(null);
   useEffect(() => {
     const prev = configRef.current;
     const isInitialMount = prev === null;
 
     // Skip if config unchanged (but always run on initial mount)
-    if (!isInitialMount && prev.realWindowStartMs === realWindowStartMs && prev.speedup === speedup) return;
-    configRef.current = { realWindowStartMs, speedup };
+    if (!isInitialMount &&
+        prev.realWindowStartMs === realWindowStartMs &&
+        prev.speedup === speedup &&
+        prev.dateSelectionKey === dateSelectionKey) return;
+    configRef.current = { realWindowStartMs, speedup, dateSelectionKey };
 
     // Only log and reset state on config changes, not initial mount
     if (!isInitialMount) {
@@ -694,7 +698,7 @@ export const BikeMap = () => {
       serviceRef.current?.terminate();
       serviceRef.current = null;
     };
-  }, [realWindowStartMs, speedup, realFadeDurationMs, play, animationStartDate]);
+  }, [realWindowStartMs, speedup, realFadeDurationMs, play, animationStartDate, dateSelectionKey]);
 
   // Select a random visible biker with at least half their trip remaining
   const selectRandomBiker = useCallback(() => {
