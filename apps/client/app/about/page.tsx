@@ -1,10 +1,85 @@
 "use client";
 
 import { Kbd } from "@/components/ui/kbd";
-import { DEFAULT_SPEEDUP, SIM_BATCH_SIZE_MS } from "@/lib/config";
+import { COLORS, DEFAULT_SPEEDUP, SIM_BATCH_SIZE_MS } from "@/lib/config";
 import { ArrowLeft, Coffee, Github } from "lucide-react";
+import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+
+const ArrowIcon = ({ color, showTrail = false }: { color: readonly [number, number, number]; showTrail?: boolean }) => {
+  const colorRgb = `rgb(${color.join(", ")})`;
+  const gradientId = `trail-${color.join("-")}`;
+  return (
+    <svg
+      width="100"
+      height="100"
+      viewBox="30 -5 70 70"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="shrink-0 size-3.5 overflow-visible"
+    >
+      <defs>
+        <linearGradient id={gradientId} x1="63.4105" y1="31.2322" x2="63.4105" y2="137.967" gradientUnits="userSpaceOnUse">
+          <stop stopColor={colorRgb} />
+          <stop offset="0.817308" stopColor={colorRgb} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {/* Trail */}
+      <motion.rect
+        x="52.4727"
+        y="31.2322"
+        width="21.8756"
+        transform="rotate(45 52.4727 31.2322)"
+        fill={`url(#${gradientId})`}
+        initial={{ height: 0, opacity: 0 }}
+        animate={{
+          height: showTrail ? 106.735 : 0,
+          opacity: showTrail ? 1 : 0
+        }}
+        transition={{
+          height: { duration: showTrail ? 0.3 : 0.2, ease: "easeOut" },
+          opacity: { duration: showTrail ? 0.15 : 0.25, ease: "easeOut" }
+        }}
+      />
+      {/* Arrow */}
+      <path
+        d="M90.3143 6.98712C90.609 6.86031 90.9358 6.82533 91.2521 6.88673C91.5684 6.94813 91.8596 7.10308 92.088 7.33146C92.3164 7.55983 92.4713 7.85108 92.5327 8.16738C92.5941 8.48368 92.5591 8.81042 92.4323 9.10518L71.5583 60.8878C71.431 61.2027 71.2075 61.4687 70.9194 61.6482C70.6314 61.8276 70.2934 61.9113 69.9536 61.8874C69.6137 61.8635 69.2892 61.7333 69.0262 61.5151C68.7631 61.297 68.5748 61.002 68.4879 60.6721L63.292 40.8028C62.9995 39.6801 62.4121 38.6541 61.5911 37.8313C60.77 37.0086 59.7452 36.4191 58.6231 36.1242L38.7473 30.9315C38.4174 30.8447 38.1225 30.6564 37.9043 30.3933C37.6861 30.1302 37.5559 29.8057 37.532 29.4658C37.5081 29.126 37.5918 28.7881 37.7713 28.5C37.9507 28.212 38.2167 27.9884 38.5316 27.8611L90.3143 6.98712Z"
+        fill={colorRgb}
+        stroke={colorRgb}
+        strokeWidth="6.45837"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+};
+
+const LegendItem = ({ color, label, showTrailOnHover = true, glowIntensity = "normal" }: { color: readonly [number, number, number]; label: string; showTrailOnHover?: boolean; glowIntensity?: "normal" | "intense" }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const glowFilter = glowIntensity === "intense"
+    ? `drop-shadow(0 0 5px rgba(${color.join(", ")}, 0.8)) drop-shadow(0 0 7px rgba(${color.join(", ")}, 0.6))`
+    : `drop-shadow(0 0 8px rgb(${color.join(", ")}))`;
+  return (
+    <span
+      className="group flex items-center gap-1.5 cursor-default"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <span
+        className="transition-[filter] duration-200"
+        style={{
+          filter: isHovered ? glowFilter : "none",
+          transform: "translateZ(0)",
+          willChange: "filter",
+        }}
+      >
+        <ArrowIcon color={color} showTrail={showTrailOnHover && isHovered} />
+      </span>
+      <span>{label}</span>
+    </span>
+  );
+};
 
 const XIcon = ({ className }: { className?: string }) => (
   <svg
@@ -78,8 +153,15 @@ export default function AboutPage() {
           </p>
 
           <p>
-            If you have ever used Citi Bike, your ride is on the map. Use your Citi Bike receipt to find your trip.
+            If you have ever used Citi Bike, you are part of the art. Use your Citi Bike receipt to find your trip.
           </p>
+
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            <LegendItem color={COLORS.electric} label="E-bike" />
+            <LegendItem color={COLORS.classic} label="Classic bike" />
+            <LegendItem color={COLORS.fadeIn} label="Bike unlocked" showTrailOnHover={false} glowIntensity="intense" />
+            <LegendItem color={COLORS.fadeOut} label="Bike docked" showTrailOnHover={false} glowIntensity="intense" />
+          </div>
 
           <hr className="border-white/10" />
 
@@ -132,7 +214,7 @@ export default function AboutPage() {
           <h2 className="text-lg font-medium text-white">Why</h2>
 
           <p>
-            {"I built this project because I think it is cool and beautiful. My rides are also part of this art :)"}
+            {"I built this project because I think it is cool and beautiful."}
           </p>
 
           <p>
