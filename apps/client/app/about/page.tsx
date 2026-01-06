@@ -132,11 +132,11 @@ export default function AboutPage() {
           <h2 className="text-lg font-medium text-white">Why</h2>
 
           <p>
-            {"There is no economic value for this project except that I think it is cool and beautiful :)"}
+            {"I built this project because I think it is cool and beautiful. My rides are also part of this art :)"}
           </p>
 
           <p>
-            I&apos;m open-sourcing the entire data processing pipeline and rendering code at {" "}
+            I&apos;m open-sourcing the entire data processing pipeline and visualization code at {" "}
             <a
               href="https://github.com/freeman-jiang/bikemap.nyc"
              
