@@ -40,7 +40,7 @@ Source: [NYC Neighborhoods Dataset](https://data.dathere.com/dataset/nyc-neighbo
 
 ### 3. Set Up OSRM Routing Server
 
-The pipeline needs a local OSRM server for bike route calculations. See [`osrm/README.md`](osrm/README.md) for setup instructions.
+The pipeline needs a local OSRM server for bike route calculations. See [`osrm/README.md`](osrm/README.md) for setup instructions. Run this in the background.
 
 Quick summary:
 1. Download NYC OpenStreetMap data
@@ -56,6 +56,13 @@ CSV files (all years) → build-parquet.ts  → parquet files (per month)
 ```
 
 ## Scripts
+
+If you haven't already:
+
+```bash
+cd packages/processing
+bun install
+```
 
 Run in order:
 
