@@ -947,9 +947,21 @@ export const BikeMap = () => {
       <DeckGL
         layers={layers}
         initialViewState={initialViewState}
-        controller={{ touchRotate: true }}
+        controller={{
+          touchRotate: true,
+        }}
         onClick={handleMapClick}
         onViewStateChange={({ viewState }) => {
+          // Lock pitch to 0 while following a bike, but allow rotation
+          const maxPitch = selectedTripId === null ? 60 : 0;
+          if ("pitch" in viewState && typeof viewState.pitch === "number") {
+            if (viewState.pitch > maxPitch) {
+              viewState.pitch = maxPitch;
+            }
+            if (viewState.pitch < 0) {
+              viewState.pitch = 0;
+            }
+          }
           // Track bearing for camera follow (preserves user bearing while following a bike)
           const bearing = "bearing" in viewState ? viewState.bearing : undefined;
           if (typeof bearing === "number") {
