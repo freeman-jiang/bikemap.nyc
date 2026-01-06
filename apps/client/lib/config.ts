@@ -42,7 +42,7 @@ export const EASE_TIME_MULTIPLIER = 2; // How much longer ease zones take vs lin
 
 // Fade duration in real-time milliseconds (multiplied by speedup at usage)
 export const REAL_FADE_DURATION_MS = 700;
-export const REAL_COLOR_TRANSITION_MS = 500; // Color transition during movement (green -> bike color)
+export const REAL_COLOR_TRANSITION_MS = 700; // Color transition during movement (green -> bike color)
 
 // Max frame delta to prevent time jumps when returning from background tab (100ms = 10 FPS minimum)
 export const REAL_MAX_FRAME_DELTA_MS = 100;
