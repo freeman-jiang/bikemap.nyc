@@ -19,7 +19,7 @@ There is no backend. The client uses [DuckDB WASM](https://duckdb.org/docs/api/w
 
 ### 1) Data processing pipeline
 
-The [raw system data](https://citibikenyc.com/system-data) spans 12 years and has significant inconsistencies, making it difficult to use directly. The processing pipeline cleans and normalizes the data into optimized parquet files.
+The raw system data spans 12 years and has significant inconsistencies, making it difficult to use directly. The processing pipeline cleans and normalizes the data into optimized parquet files.
 
 1. **Station clustering**: Creates a list of all unique station names and their coordinates.
 2. **Route generation**: Queries [OSRM](https://project-osrm.org/) for bike routes between all station pairs. Geometries are cached per pair and stored as polyline6 in an intermediate SQLite database.
