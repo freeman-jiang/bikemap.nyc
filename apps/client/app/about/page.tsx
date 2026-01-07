@@ -214,7 +214,14 @@ export default function AboutPage() {
           <h2 className="text-lg font-medium text-white">Why</h2>
 
           <p>
-            {"I built this project because I think it is cool and beautiful."}
+            {"I built this project because I think it is cool and beautiful... and I was "}
+            <a
+              href="https://x.com/freemanjiangg/status/1996111445642096920"
+              className="text-zinc-300 font-medium hover:text-zinc-100 underline underline-offset-4"
+            >
+              procrastinating
+            </a>
+            {" my exams."}
           </p>
 
           <p>
