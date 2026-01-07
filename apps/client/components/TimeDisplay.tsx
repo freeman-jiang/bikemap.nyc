@@ -1,16 +1,31 @@
 import { formatDateShort, formatTimeOnly } from "@/lib/format";
 import { useAnimationStore } from "@/lib/stores/animation-store";
 import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useState } from "react";
 
 type Props = {
   simTimeMs: number; // simulation ms from animation start
   realWindowStartDate: Date; // animation window start date (real time)
 };
 
+const SLOW_LOADING_THRESHOLD_MS = 5000;
+
 export function TimeDisplay({ simTimeMs, realWindowStartDate }: Props) {
   const isLoadingTrips = useAnimationStore((s) => s.isLoadingTrips);
   const loadError = useAnimationStore((s) => s.loadError);
   const realDisplayTimeMs = realWindowStartDate.getTime() + simTimeMs;
+  const [showSlowLoadingText, setShowSlowLoadingText] = useState(((false)));
+
+  useEffect(() => {
+    if (!isLoadingTrips) {
+      return;
+    }
+    const timer = setTimeout(() => setShowSlowLoadingText(true), SLOW_LOADING_THRESHOLD_MS);
+    return () => {
+      clearTimeout(timer);
+      setShowSlowLoadingText(false);
+    };
+  }, [isLoadingTrips]);
 
   const showOverlay = isLoadingTrips || loadError;
 
@@ -50,6 +65,41 @@ export function TimeDisplay({ simTimeMs, realWindowStartDate }: Props) {
                   }}
                 />
               </div>
+              <AnimatePresence>
+                {showSlowLoadingText && (
+                  <motion.div
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    variants={{
+                      hidden: {},
+                      visible: { transition: { staggerChildren: 0.5 } },
+                    }}
+                    className="absolute inset-0"
+                  >
+                    <motion.span
+                      variants={{
+                        hidden: { opacity: 0, filter: "blur(8px)" },
+                        visible: { opacity: 1, filter: "blur(0px)" },
+                      }}
+                      transition={{ duration: 0.5, ease: "easeInOut" }}
+                      className="text-white/50 text-[8px] tracking-wide whitespace-nowrap font-mono absolute left-1/2 bottom-2 -translate-x-1/2"
+                    >
+                      This could take ~20s
+                    </motion.span>
+                    <motion.span
+                      variants={{
+                        hidden: { opacity: 0, filter: "blur(8px)" },
+                        visible: { opacity: 1, filter: "blur(0px)" },
+                      }}
+                      transition={{ duration: 0.5, ease: "easeInOut" }}
+                      className="text-white/50 text-[8px] tracking-wide whitespace-nowrap font-mono absolute left-1/2 top-2 -translate-x-1/2"
+                    >
+                      depending on connection
+                    </motion.span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         )}
