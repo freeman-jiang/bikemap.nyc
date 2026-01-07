@@ -394,10 +394,12 @@ async function main() {
     totalWithRoute += monthWithRoute;
 
     // Export to parquet (only trips with routes - round trips and ferry crossings are excluded)
+    // ROW_GROUP_SIZE 2048 (DuckDB minimum) enables efficient time-range queries via predicate pushdown.
+    // Very important to not use the default of 122,880 rows (this means we have to fetch the row group for 122k trips just to get our 30m chunk!)
     const monthPath = path.join(outputDir, `parquets/${month}.parquet`);
     await connection.run(`
       COPY (SELECT * FROM joined_month WHERE routeGeometry IS NOT NULL ORDER BY startedAt)
-      TO '${monthPath}' (FORMAT PARQUET, COMPRESSION ZSTD)
+      TO '${monthPath}' (FORMAT PARQUET, COMPRESSION ZSTD, ROW_GROUP_SIZE 2048)
     `);
 
     const monthStats = await stat(monthPath);
