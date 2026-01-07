@@ -10,7 +10,7 @@ Each moving arrow represents a real bike ride, based on anonymized [historical s
 - Natural language date parsing to jump to any moment in history
 - Search for individual rides by date and station name
 - Full keyboard controls for playback and navigation
-- Coverage of more than 200 million trips from 2013 to present
+- Coverage of more than 291.2 million trips from 2013 to 2025 with 0.7% data loss (mainly from malformed entries)
 
 ## How it works 
 
