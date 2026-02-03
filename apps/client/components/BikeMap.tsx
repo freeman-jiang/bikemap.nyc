@@ -25,7 +25,7 @@ import { DataFilterExtension, DataFilterExtensionProps } from "@deck.gl/extensio
 import { TripsLayer } from "@deck.gl/geo-layers";
 import { IconLayer, PathLayer, ScatterplotLayer, SolidPolygonLayer } from "@deck.gl/layers";
 import { DeckGL } from "@deck.gl/react";
-import { Info, Pause, Play, Search, Shuffle } from "lucide-react";
+import { Info, Pause, Play, Search, Shuffle, Upload } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -35,6 +35,8 @@ import { MapControlButton } from "./MapControlButton";
 import { SelectedTripPanel } from "./SelectedTripPanel";
 import { TimeDisplay } from "./TimeDisplay";
 import { Kbd } from "./ui/kbd";
+import { UploadDialog } from "./UploadDialog";
+import { useUploadStore } from "@/lib/stores/upload-store";
 
 import type { MapViewState } from "@deck.gl/core";
 import { LinearInterpolator } from "@deck.gl/core";
@@ -339,6 +341,7 @@ export const BikeMap = () => {
   const { isPickingLocation, setPickedLocation, pickedLocation } = usePickerStore();
   const { getStation, load: loadStations, stations } = useStationsStore();
   const { open: openSearch, step: searchStep } = useSearchStore();
+  const { open: openUpload } = useUploadStore();
 
   // Detect Mac vs Windows/Linux for keyboard shortcut display
   const [isMac, setIsMac] = useState(true); // Default to Mac to avoid layout shift
@@ -756,12 +759,15 @@ export const BikeMap = () => {
       } else if (e.key.toLowerCase() === "h" && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         toggleHud();
+      } else if (e.key.toLowerCase() === "u" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        openUpload();
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [togglePlayPause, selectRandomBiker, triggerButtonAnimation, toggleHud, isLoadingTrips]);
+  }, [togglePlayPause, selectRandomBiker, triggerButtonAnimation, toggleHud, isLoadingTrips, openUpload]);
 
 
   if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
@@ -1043,6 +1049,16 @@ export const BikeMap = () => {
             </span>
             <Kbd className="hidden sm:inline-flex bg-zinc-800 text-white/70">A</Kbd>
           </a>
+          <button
+            onClick={openUpload}
+            className="flex items-center justify-between gap-3 bg-black/45 hover:bg-black/55 hover:scale-[1.02] active:scale-95 text-white/90 text-sm font-medium pl-2.5 pr-2.5 py-2 sm:pl-2 sm:pr-2 sm:py-1.5 rounded-full border border-white/10 backdrop-blur-md transition-all duration-200 ease-out shadow-[0_0_20px_rgba(0,0,0,0.6)] hover:duration-100 active:duration-200 outline-none"
+          >
+            <span className="flex items-center gap-1.5 min-w-20">
+              <Upload className="w-4 h-4" />
+              Upload
+            </span>
+            <Kbd className="hidden sm:inline-flex bg-zinc-800 text-white/70">U</Kbd>
+          </button>
         </div>
 
         {/* Time - absolutely centered */}
@@ -1072,6 +1088,7 @@ export const BikeMap = () => {
         </div>
       </div>
       )}
+      <UploadDialog />
     </div>
   );
 };
