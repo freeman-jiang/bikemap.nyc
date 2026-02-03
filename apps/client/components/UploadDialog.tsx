@@ -2,30 +2,41 @@
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useUploadStore } from "@/lib/stores/upload-store"
+import { useUserRidesStore } from "@/lib/stores/user-rides-store"
 import { cn } from "@/lib/utils"
+import { parseMboxFiles } from "@/services/mbox-parser"
 import JSZip from "jszip"
-import { FileArchive, Loader2, Upload, CheckCircle2, XCircle } from "lucide-react"
+import { FileArchive, Loader2, Upload, CheckCircle2, XCircle, Bike } from "lucide-react"
 import { useCallback, useState } from "react"
 
-type UploadStatus = "idle" | "dragging" | "processing" | "success" | "error"
+type UploadStatus = "idle" | "dragging" | "processing" | "parsing" | "success" | "error"
 
 type MboxResult = {
   filename: string
   content: string
 }
 
+type ParseStats = {
+  totalRides: number
+  totalEmails: number
+  errorCount: number
+}
+
 export function UploadDialog() {
   const { isOpen, close } = useUploadStore()
+  const { addRides } = useUserRidesStore()
   const [status, setStatus] = useState<UploadStatus>("idle")
   const [error, setError] = useState<string | null>(null)
   const [mboxFiles, setMboxFiles] = useState<MboxResult[]>([])
   const [progress, setProgress] = useState<string>("")
+  const [parseStats, setParseStats] = useState<ParseStats | null>(null)
 
   const resetState = useCallback(() => {
     setStatus("idle")
     setError(null)
     setMboxFiles([])
     setProgress("")
+    setParseStats(null)
   }, [])
 
   const handleClose = useCallback((open: boolean) => {
@@ -74,15 +85,38 @@ export function UploadDialog() {
       }
 
       setMboxFiles(results)
+      
+      // Parse the mbox files
+      setStatus("parsing")
+      setProgress("Parsing ride receipts...")
+      
+      // Use setTimeout to allow UI to update before parsing
+      await new Promise(resolve => setTimeout(resolve, 50))
+      
+      const parseResult = parseMboxFiles(results)
+      
+      if (parseResult.rides.length === 0) {
+        setStatus("error")
+        setError("No ride receipts found in the exported emails. Make sure you exported Citi Bike ride receipts.")
+        return
+      }
+      
+      // Add rides to store
+      addRides(parseResult.rides)
+      
+      setParseStats({
+        totalRides: parseResult.rides.length,
+        totalEmails: parseResult.totalEmails,
+        errorCount: parseResult.errors.length
+      })
+      
       setStatus("success")
       setProgress("")
-
-      // Log for now - this is where we'd pass to the parser
-      console.log(`Extracted ${results.length} mbox file(s):`, results.map(r => ({
-        filename: r.filename,
-        sizeBytes: r.content.length,
-        preview: r.content.slice(0, 500),
-      })))
+      
+      console.log(`Parsed ${parseResult.rides.length} rides from ${parseResult.totalEmails} emails`, {
+        errors: parseResult.errors,
+        sample: parseResult.rides.slice(0, 3)
+      })
 
     } catch (err) {
       setStatus("error")
@@ -183,30 +217,38 @@ export function UploadDialog() {
             </>
           )}
 
-          {status === "processing" && (
+          {(status === "processing" || status === "parsing") && (
             <>
               <Loader2 className="size-10 text-blue-400 animate-spin" />
               <p className="text-sm text-blue-300">{progress || "Processing..."}</p>
             </>
           )}
 
-          {status === "success" && (
+          {status === "success" && parseStats && (
             <>
               <CheckCircle2 className="size-10 text-green-400" />
               <div className="text-center">
                 <p className="text-sm text-green-300">
-                  Found {mboxFiles.length} mbox file{mboxFiles.length !== 1 ? "s" : ""}
+                  Found {parseStats.totalRides} ride{parseStats.totalRides !== 1 ? "s" : ""}!
                 </p>
-                <ul className="mt-2 space-y-1">
-                  {mboxFiles.map((mbox) => (
-                    <li key={mbox.filename} className="text-xs text-white/50">
-                      {mbox.filename} ({(mbox.content.length / 1024).toFixed(1)} KB)
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-3 text-xs text-white/40">
-                  Parsing coming soon...
+                <p className="mt-1 text-xs text-white/50">
+                  Parsed from {parseStats.totalEmails} email{parseStats.totalEmails !== 1 ? "s" : ""}
                 </p>
+                <div className="mt-4 flex items-center justify-center gap-2">
+                  <Bike className="size-4 text-white/60" />
+                  <span className="text-xs text-white/60">
+                    Your rides have been imported
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    close()
+                    setTimeout(resetState, 200)
+                  }}
+                  className="mt-4 px-4 py-2 text-sm font-medium text-white/90 bg-white/10 hover:bg-white/15 rounded-lg transition-colors"
+                >
+                  View My Rides
+                </button>
               </div>
             </>
           )}
