@@ -25,6 +25,7 @@ import { DataFilterExtension, DataFilterExtensionProps } from "@deck.gl/extensio
 import { TripsLayer } from "@deck.gl/geo-layers";
 import { IconLayer, PathLayer, ScatterplotLayer, SolidPolygonLayer } from "@deck.gl/layers";
 import { DeckGL } from "@deck.gl/react";
+import polyline from "@mapbox/polyline";
 import { Info, Pause, Play, Search, Shuffle, Upload, Bike } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { AnimatePresence } from "motion/react";
@@ -57,6 +58,15 @@ const ARROW_SVG = `data:image/svg+xml;base64,${btoa(`
 // Color utilities
 type Color4 = [number, number, number, number];
 const MAX_ALPHA = 0.8 * 255;
+
+// User ride type for map rendering
+type UserRideWithPath = {
+  id: string;
+  path: [number, number][];
+  bikeType: string;
+  startStation: string;
+  endStation: string;
+};
 
 // Layer accessor functions (extracted to avoid recreation on each render)
 const getPath = (d: ProcessedTrip) => d.path;
@@ -344,7 +354,7 @@ export const BikeMap = () => {
   const { getStation, load: loadStations, stations } = useStationsStore();
   const { open: openSearch, step: searchStep } = useSearchStore();
   const { open: openUpload } = useUploadStore();
-  const { rides: userRides } = useUserRidesStore();
+  const { rides: userRides, selectedRideId, showAllRides, selectRide } = useUserRidesStore();
   const [isMyRidesOpen, setIsMyRidesOpen] = useState(false);
 
   // Detect Mac vs Windows/Linux for keyboard shortcut display
@@ -358,18 +368,94 @@ export const BikeMap = () => {
     loadStations();
   }, [loadStations]);
 
-  // Esc key handler: deselect selected trip
+  // User rides with decoded paths for rendering
+  const userRidesWithPaths = useMemo((): UserRideWithPath[] => {
+    const ridesWithGeometry = userRides.filter(r => r.routeGeometry);
+    
+    // Filter based on selection mode
+    const ridesToShow = showAllRides 
+      ? ridesWithGeometry 
+      : selectedRideId 
+        ? ridesWithGeometry.filter(r => r.id === selectedRideId)
+        : [];
+
+    return ridesToShow.map(ride => {
+      // Decode polyline6 - returns [lat, lng][], flip to [lng, lat]
+      const decoded = polyline.decode(ride.routeGeometry!, 6);
+      const path: [number, number][] = decoded.map(([lat, lng]) => [lng, lat]);
+      
+      return {
+        id: ride.id,
+        path,
+        bikeType: ride.bikeType,
+        startStation: ride.startStation,
+        endStation: ride.endStation,
+      };
+    });
+  }, [userRides, showAllRides, selectedRideId]);
+
+  // Zoom to user ride when selected or when showing all rides
+  useEffect(() => {
+    if (userRidesWithPaths.length === 0) return;
+
+    // Calculate bounding box of all visible paths
+    let minLng = Infinity, maxLng = -Infinity;
+    let minLat = Infinity, maxLat = -Infinity;
+
+    for (const ride of userRidesWithPaths) {
+      for (const [lng, lat] of ride.path) {
+        minLng = Math.min(minLng, lng);
+        maxLng = Math.max(maxLng, lng);
+        minLat = Math.min(minLat, lat);
+        maxLat = Math.max(maxLat, lat);
+      }
+    }
+
+    // Calculate center and appropriate zoom
+    const centerLng = (minLng + maxLng) / 2;
+    const centerLat = (minLat + maxLat) / 2;
+    
+    // Calculate zoom to fit bounds (rough approximation)
+    const lngDiff = maxLng - minLng;
+    const latDiff = maxLat - minLat;
+    const maxDiff = Math.max(lngDiff, latDiff);
+    
+    // Zoom calculation: smaller diff = higher zoom
+    // ~0.001 diff ≈ zoom 17, ~0.01 diff ≈ zoom 14, ~0.1 diff ≈ zoom 11
+    const zoom = Math.min(16, Math.max(11, 14 - Math.log2(maxDiff / 0.01)));
+
+    setInitialViewState(prev => ({
+      ...prev,
+      longitude: centerLng,
+      latitude: centerLat,
+      zoom,
+      transitionDuration: 1000,
+      transitionInterpolator: cameraInterpolator,
+    }));
+  }, [userRidesWithPaths]);
+
+  // Esc key handler: deselect selected trip or user ride
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && selectedTripId !== null) {
-        e.preventDefault();
-        selectTrip(null);
+      if (e.key === "Escape") {
+        // Clear user ride selection first
+        if (selectedRideId !== null || showAllRides) {
+          e.preventDefault();
+          selectRide(null);
+          useUserRidesStore.getState().setShowAllRides(false);
+          return;
+        }
+        // Then clear trip selection
+        if (selectedTripId !== null) {
+          e.preventDefault();
+          selectTrip(null);
+        }
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [selectedTripId, selectTrip]);
+  }, [selectedTripId, selectTrip, selectedRideId, selectRide, showAllRides]);
 
   // Keyboard shortcut refs (to avoid stale closures)
   const animStateRef = useRef(animState);
@@ -805,7 +891,8 @@ export const BikeMap = () => {
     return trip ? [trip] : [];
     // forgive me for this
     // eslint-disable-next-line react-hooks/exhaustive-deps 
-  }, [selectedTripId, activeTrips]); 
+  }, [selectedTripId, activeTrips]);
+
 
   const layers = useMemo(() => {
     const hasSelection = selectedTripData.length > 0;
@@ -892,6 +979,43 @@ export const BikeMap = () => {
           opacity: showStations ? 0 : 700,
         },
       }),
+      // User rides layer - shows imported rides from Gmail
+      ...(userRidesWithPaths.length > 0 ? [
+        new PathLayer<UserRideWithPath>({
+          id: "user-rides",
+          data: userRidesWithPaths,
+          getPath: (d) => d.path,
+          getColor: (d) => d.bikeType === 'ebike' 
+            ? [255, 200, 50, 200]   // Gold/yellow for ebike
+            : [50, 200, 255, 200],  // Cyan for classic
+          getWidth: 4,
+          widthMinPixels: 2,
+          widthMaxPixels: 8,
+          opacity: 0.9,
+          pickable: true,
+          jointRounded: true,
+          capRounded: true,
+        }),
+        // Start/end markers for user rides
+        new ScatterplotLayer<UserRideWithPath>({
+          id: "user-rides-start",
+          data: userRidesWithPaths,
+          getPosition: (d) => d.path[0],
+          getFillColor: [80, 200, 120, 255], // Green for start
+          getRadius: 6,
+          radiusUnits: "pixels",
+          pickable: false,
+        }),
+        new ScatterplotLayer<UserRideWithPath>({
+          id: "user-rides-end",
+          data: userRidesWithPaths,
+          getPosition: (d) => d.path[d.path.length - 1],
+          getFillColor: [247, 118, 142, 255], // Red/pink for end
+          getRadius: 6,
+          radiusUnits: "pixels",
+          pickable: false,
+        }),
+      ] : []),
       // Dimming overlay - always present, fades via GPU transitions
       new SolidPolygonLayer({
         id: "dim-overlay",
@@ -945,7 +1069,7 @@ export const BikeMap = () => {
           ]
         : []),
     ];
-  }, [activeTrips, simTimeMs, selectedTripId, selectedTripData, searchStep, stations]);
+  }, [activeTrips, simTimeMs, selectedTripId, selectedTripData, searchStep, stations, userRidesWithPaths]);
 
   const handleMapClick = useCallback(
     (info: { coordinate?: number[] }) => {
@@ -1081,6 +1205,29 @@ export const BikeMap = () => {
         {/* Time - absolutely centered */}
         <div className="absolute left-1/2 -translate-x-1/2 pointer-events-auto flex flex-col items-center">
           <TimeDisplay simTimeMs={simTimeMs} realWindowStartDate={animationStartDate} />
+          {/* User ride indicator */}
+          {userRidesWithPaths.length > 0 && (
+            <div className="mt-2 px-3 py-1.5 bg-black/70 backdrop-blur-md rounded-full border border-white/20 text-sm text-white/90 flex items-center gap-2">
+              <Bike className="w-4 h-4 text-blue-400" />
+              {showAllRides ? (
+                <span>Viewing {userRidesWithPaths.length} ride{userRidesWithPaths.length !== 1 ? 's' : ''}</span>
+              ) : (
+                <span>
+                  {userRidesWithPaths[0]?.startStation} → {userRidesWithPaths[0]?.endStation}
+                </span>
+              )}
+              <button
+                onClick={() => {
+                  selectRide(null);
+                  useUserRidesStore.getState().setShowAllRides(false);
+                }}
+                className="ml-1 text-white/50 hover:text-white/90 transition-colors"
+                title="Close (Esc)"
+              >
+                ×
+              </button>
+            </div>
+          )}
           {/* SelectedTripPanel - mobile only (below time) */}
           <AnimatePresence>
             {selectedTripInfo && (

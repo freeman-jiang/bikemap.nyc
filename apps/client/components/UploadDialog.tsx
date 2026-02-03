@@ -3,13 +3,15 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useUploadStore } from "@/lib/stores/upload-store"
 import { useUserRidesStore } from "@/lib/stores/user-rides-store"
+import { useStationsStore } from "@/lib/stores/stations-store"
 import { cn } from "@/lib/utils"
 import { parseMboxFiles } from "@/services/mbox-parser"
+import { resolveRoutesForRides } from "@/services/user-ride-routing-service"
 import JSZip from "jszip"
-import { FileArchive, Loader2, Upload, CheckCircle2, XCircle, Bike } from "lucide-react"
+import { FileArchive, Loader2, Upload, CheckCircle2, XCircle, Bike, Route } from "lucide-react"
 import { useCallback, useState } from "react"
 
-type UploadStatus = "idle" | "dragging" | "processing" | "parsing" | "success" | "error"
+type UploadStatus = "idle" | "dragging" | "processing" | "parsing" | "routing" | "success" | "error"
 
 type MboxResult = {
   filename: string
@@ -20,11 +22,13 @@ type ParseStats = {
   totalRides: number
   totalEmails: number
   errorCount: number
+  routesResolved: number
+  routesFailed: number
 }
 
 export function UploadDialog() {
   const { isOpen, close } = useUploadStore()
-  const { addRides } = useUserRidesStore()
+  const { addRides, updateRides } = useUserRidesStore()
   const [status, setStatus] = useState<UploadStatus>("idle")
   const [error, setError] = useState<string | null>(null)
   const [mboxFiles, setMboxFiles] = useState<MboxResult[]>([])
@@ -101,20 +105,54 @@ export function UploadDialog() {
         return
       }
       
-      // Add rides to store
+      // Add rides to store (without routes initially)
       addRides(parseResult.rides)
+      
+      // Resolve routes for rides
+      setStatus("routing")
+      setProgress("Loading station data...")
+      
+      // Ensure stations are loaded
+      await useStationsStore.getState().load()
+      
+      // Get fresh stations data from store after loading
+      const { stations, stationByName } = useStationsStore.getState()
+      
+      // Small delay to let UI update
+      await new Promise(resolve => setTimeout(resolve, 50))
+      
+      setProgress(`Fetching routes (0/${parseResult.rides.length})...`)
+      
+      const { updates, result: routeResult } = await resolveRoutesForRides(
+        parseResult.rides,
+        stations,
+        stationByName,
+        (current, total) => {
+          setProgress(`Fetching routes (${current}/${total})...`)
+        }
+      )
+      
+      // Apply route updates to store
+      if (updates.length > 0) {
+        updateRides(updates)
+      }
       
       setParseStats({
         totalRides: parseResult.rides.length,
         totalEmails: parseResult.totalEmails,
-        errorCount: parseResult.errors.length
+        errorCount: parseResult.errors.length,
+        routesResolved: routeResult.resolved,
+        routesFailed: routeResult.failed,
       })
       
       setStatus("success")
       setProgress("")
       
       console.log(`Parsed ${parseResult.rides.length} rides from ${parseResult.totalEmails} emails`, {
-        errors: parseResult.errors,
+        parseErrors: parseResult.errors,
+        routeErrors: routeResult.errors,
+        routesResolved: routeResult.resolved,
+        routesFailed: routeResult.failed,
         sample: parseResult.rides.slice(0, 3)
       })
 
@@ -122,7 +160,7 @@ export function UploadDialog() {
       setStatus("error")
       setError(err instanceof Error ? err.message : "Failed to process zip file")
     }
-  }, [])
+  }, [addRides, updateRides])
 
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -185,7 +223,7 @@ export function UploadDialog() {
             "relative flex flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed p-8 transition-colors",
             status === "dragging" && "border-white/50 bg-white/5",
             status === "idle" && "border-white/20 hover:border-white/30 hover:bg-white/[0.02]",
-            status === "processing" && "border-blue-500/50 bg-blue-500/5",
+            (status === "processing" || status === "parsing" || status === "routing") && "border-blue-500/50 bg-blue-500/5",
             status === "success" && "border-green-500/50 bg-green-500/5",
             status === "error" && "border-red-500/50 bg-red-500/5"
           )}
@@ -224,6 +262,13 @@ export function UploadDialog() {
             </>
           )}
 
+          {status === "routing" && (
+            <>
+              <Route className="size-10 text-blue-400 animate-pulse" />
+              <p className="text-sm text-blue-300">{progress || "Resolving routes..."}</p>
+            </>
+          )}
+
           {status === "success" && parseStats && (
             <>
               <CheckCircle2 className="size-10 text-green-400" />
@@ -234,6 +279,12 @@ export function UploadDialog() {
                 <p className="mt-1 text-xs text-white/50">
                   Parsed from {parseStats.totalEmails} email{parseStats.totalEmails !== 1 ? "s" : ""}
                 </p>
+                {parseStats.routesResolved > 0 && (
+                  <p className="mt-1 text-xs text-white/50">
+                    {parseStats.routesResolved} route{parseStats.routesResolved !== 1 ? "s" : ""} mapped
+                    {parseStats.routesFailed > 0 && ` (${parseStats.routesFailed} failed)`}
+                  </p>
+                )}
                 <div className="mt-4 flex items-center justify-center gap-2">
                   <Bike className="size-4 text-white/60" />
                   <span className="text-xs text-white/60">

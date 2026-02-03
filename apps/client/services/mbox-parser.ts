@@ -222,7 +222,14 @@ function parseEmail(emailContent: string): UserRide | null {
     durationMinutes: duration ?? 0,
     bikeType,
     bikeId,
-    cost
+    cost,
+    // Route geometry (to be resolved after parsing)
+    routeGeometry: null,
+    routeDistance: null,
+    startLat: null,
+    startLng: null,
+    endLat: null,
+    endLng: null,
   }
 }
 

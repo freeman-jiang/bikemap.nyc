@@ -2,7 +2,7 @@
 
 import { useUserRidesStore, UserRide } from "@/lib/stores/user-rides-store"
 import { useUploadStore } from "@/lib/stores/upload-store"
-import { Bike, X, Upload, Zap, ChevronRight, Calendar, Clock, DollarSign, Trash2 } from "lucide-react"
+import { Bike, X, Upload, Zap, ChevronRight, Trash2, MapPin, Eye } from "lucide-react"
 import { memo, useMemo, useState } from "react"
 import { cn } from "@/lib/utils"
 
@@ -48,14 +48,33 @@ function groupRidesByMonth(rides: UserRide[]): Map<string, UserRide[]> {
 }
 
 // Single ride item component
-const RideItem = memo(function RideItem({ ride }: { ride: UserRide }) {
+const RideItem = memo(function RideItem({ 
+  ride, 
+  isSelected,
+  onSelect,
+  onClose
+}: { 
+  ride: UserRide
+  isSelected: boolean
+  onSelect: (id: string) => void
+  onClose: () => void
+}) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const hasRoute = !!ride.routeGeometry
+  
+  const handleViewOnMap = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onSelect(ride.id)
+    onClose() // Close the panel to see the map
+  }
   
   return (
     <div 
       className={cn(
         "px-3 py-2.5 transition-colors cursor-pointer",
-        isExpanded ? "bg-white/5" : "hover:bg-white/[0.03]"
+        isSelected ? "bg-blue-500/20 border-l-2 border-blue-400" : "",
+        isExpanded && !isSelected ? "bg-white/5" : "",
+        !isExpanded && !isSelected && "hover:bg-white/[0.03]"
       )}
       onClick={() => setIsExpanded(!isExpanded)}
     >
@@ -85,11 +104,25 @@ const RideItem = memo(function RideItem({ ride }: { ride: UserRide }) {
           </div>
         </div>
         
-        {/* Cost */}
-        <div className="text-right flex-shrink-0">
+        {/* Cost and View button */}
+        <div className="text-right flex-shrink-0 flex items-center gap-2">
           <span className="text-sm font-medium text-white/80">
             ${ride.cost.toFixed(2)}
           </span>
+          {hasRoute && (
+            <button
+              onClick={handleViewOnMap}
+              className={cn(
+                "p-1.5 rounded-md transition-colors",
+                isSelected 
+                  ? "bg-blue-500 text-white" 
+                  : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white/90"
+              )}
+              title="View on map"
+            >
+              <MapPin className="size-3.5" />
+            </button>
+          )}
         </div>
       </div>
       
@@ -114,6 +147,11 @@ const RideItem = memo(function RideItem({ ride }: { ride: UserRide }) {
             <span>Receipt</span>
             <span className="text-white/80 font-mono text-[10px]">#{ride.id.slice(-8)}</span>
           </div>
+          {!hasRoute && (
+            <div className="flex items-center gap-1 text-yellow-400/70 mt-2">
+              <span>Route not available</span>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -164,10 +202,11 @@ type MyRidesPanelProps = {
 }
 
 export const MyRidesPanel = memo(function MyRidesPanel({ isOpen, onClose }: MyRidesPanelProps) {
-  const { rides, clearRides } = useUserRidesStore()
+  const { rides, clearRides, selectedRideId, selectRide, showAllRides, setShowAllRides } = useUserRidesStore()
   const { open: openUpload } = useUploadStore()
   
   const groupedRides = useMemo(() => groupRidesByMonth(rides), [rides])
+  const ridesWithRoutes = useMemo(() => rides.filter(r => r.routeGeometry), [rides])
   
   if (!isOpen) return null
   
@@ -211,6 +250,33 @@ export const MyRidesPanel = memo(function MyRidesPanel({ isOpen, onClose }: MyRi
           {/* Stats */}
           <RideStats rides={rides} />
           
+          {/* View All Toggle */}
+          {ridesWithRoutes.length > 0 && (
+            <div className="px-4 py-2 border-b border-white/10 flex items-center justify-between">
+              <span className="text-xs text-white/60">
+                {ridesWithRoutes.length} ride{ridesWithRoutes.length !== 1 ? 's' : ''} with routes
+              </span>
+              <button
+                onClick={() => {
+                  setShowAllRides(!showAllRides)
+                  if (!showAllRides) {
+                    selectRide(null) // Clear single selection when viewing all
+                    onClose() // Close panel to see the map
+                  }
+                }}
+                className={cn(
+                  "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors",
+                  showAllRides 
+                    ? "bg-blue-500 text-white" 
+                    : "bg-white/10 text-white/70 hover:bg-white/15"
+                )}
+              >
+                <Eye className="size-3" />
+                {showAllRides ? "Viewing All" : "View All on Map"}
+              </button>
+            </div>
+          )}
+          
           {/* Rides list */}
           <div className="flex-1 overflow-y-auto">
             {Array.from(groupedRides.entries()).map(([monthYear, monthRides]) => (
@@ -245,7 +311,16 @@ export const MyRidesPanel = memo(function MyRidesPanel({ isOpen, onClose }: MyRi
                       {/* Rides for this date */}
                       <div className="divide-y divide-white/5">
                         {dateRides.map(ride => (
-                          <RideItem key={ride.id} ride={ride} />
+                          <RideItem 
+                            key={ride.id} 
+                            ride={ride} 
+                            isSelected={selectedRideId === ride.id}
+                            onSelect={(id) => {
+                              selectRide(id)
+                              setShowAllRides(false) // Turn off "view all" when selecting a single ride
+                            }}
+                            onClose={onClose}
+                          />
                         ))}
                       </div>
                     </div>

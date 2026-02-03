@@ -14,19 +14,37 @@ export interface UserRide {
   bikeType: BikeType
   bikeId: string | null   // Bike number if available
   cost: number            // Total charge in dollars
+  // Route geometry (resolved after parsing)
+  routeGeometry: string | null  // polyline6-encoded path
+  routeDistance: number | null  // distance in meters
+  // Station coordinates (resolved from stations.json)
+  startLat: number | null
+  startLng: number | null
+  endLat: number | null
+  endLng: number | null
 }
 
 type UserRidesState = {
   rides: UserRide[]
   isLoading: boolean
+  isResolvingRoutes: boolean
   error: string | null
+  // View state
+  selectedRideId: string | null
+  showAllRides: boolean  // Show all rides on map at once
   
   // Actions
   setRides: (rides: UserRide[]) => void
   addRides: (rides: UserRide[]) => void
+  updateRide: (id: string, updates: Partial<UserRide>) => void
+  updateRides: (updates: Array<{ id: string; updates: Partial<UserRide> }>) => void
   clearRides: () => void
   setLoading: (loading: boolean) => void
+  setResolvingRoutes: (resolving: boolean) => void
   setError: (error: string | null) => void
+  // View actions
+  selectRide: (id: string | null) => void
+  setShowAllRides: (show: boolean) => void
 }
 
 export const useUserRidesStore = create<UserRidesState>()(
@@ -34,7 +52,10 @@ export const useUserRidesStore = create<UserRidesState>()(
     (set) => ({
       rides: [],
       isLoading: false,
+      isResolvingRoutes: false,
       error: null,
+      selectedRideId: null,
+      showAllRides: false,
 
       setRides: (rides) => set({ 
         rides: rides.sort((a, b) => b.date.getTime() - a.date.getTime()), // newest first
@@ -50,12 +71,32 @@ export const useUserRidesStore = create<UserRidesState>()(
           error: null
         }
       }),
+
+      updateRide: (id, updates) => set((state) => ({
+        rides: state.rides.map(r => r.id === id ? { ...r, ...updates } : r)
+      })),
+
+      updateRides: (updates) => set((state) => {
+        const updateMap = new Map(updates.map(u => [u.id, u.updates]))
+        return {
+          rides: state.rides.map(r => {
+            const update = updateMap.get(r.id)
+            return update ? { ...r, ...update } : r
+          })
+        }
+      }),
       
-      clearRides: () => set({ rides: [], error: null }),
+      clearRides: () => set({ rides: [], error: null, selectedRideId: null }),
       
       setLoading: (isLoading) => set({ isLoading }),
+
+      setResolvingRoutes: (isResolvingRoutes) => set({ isResolvingRoutes }),
       
       setError: (error) => set({ error }),
+
+      selectRide: (selectedRideId) => set({ selectedRideId }),
+
+      setShowAllRides: (showAllRides) => set({ showAllRides }),
     }),
     {
       name: 'user-rides-storage',
