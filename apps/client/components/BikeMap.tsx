@@ -25,7 +25,8 @@ import { DataFilterExtension, DataFilterExtensionProps } from "@deck.gl/extensio
 import { TripsLayer } from "@deck.gl/geo-layers";
 import { IconLayer, PathLayer, ScatterplotLayer, SolidPolygonLayer } from "@deck.gl/layers";
 import { DeckGL } from "@deck.gl/react";
-import { Info, Pause, Play, Search, Shuffle } from "lucide-react";
+import polyline from "@mapbox/polyline";
+import { Info, Pause, Play, Search, Shuffle, Upload, Bike } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -35,6 +36,10 @@ import { MapControlButton } from "./MapControlButton";
 import { SelectedTripPanel } from "./SelectedTripPanel";
 import { TimeDisplay } from "./TimeDisplay";
 import { Kbd } from "./ui/kbd";
+import { UploadDialog } from "./UploadDialog";
+import { MyRidesPanel } from "./MyRidesPanel";
+import { useUploadStore } from "@/lib/stores/upload-store";
+import { useUserRidesStore } from "@/lib/stores/user-rides-store";
 
 import type { MapViewState } from "@deck.gl/core";
 import { LinearInterpolator } from "@deck.gl/core";
@@ -53,6 +58,15 @@ const ARROW_SVG = `data:image/svg+xml;base64,${btoa(`
 // Color utilities
 type Color4 = [number, number, number, number];
 const MAX_ALPHA = 0.8 * 255;
+
+// User ride type for map rendering
+type UserRideWithPath = {
+  id: string;
+  path: [number, number][];
+  bikeType: string;
+  startStation: string;
+  endStation: string;
+};
 
 // Layer accessor functions (extracted to avoid recreation on each render)
 const getPath = (d: ProcessedTrip) => d.path;
@@ -339,6 +353,9 @@ export const BikeMap = () => {
   const { isPickingLocation, setPickedLocation, pickedLocation } = usePickerStore();
   const { getStation, load: loadStations, stations } = useStationsStore();
   const { open: openSearch, step: searchStep } = useSearchStore();
+  const { open: openUpload } = useUploadStore();
+  const { rides: userRides, selectedRideId, showAllRides, selectRide } = useUserRidesStore();
+  const [isMyRidesOpen, setIsMyRidesOpen] = useState(false);
 
   // Detect Mac vs Windows/Linux for keyboard shortcut display
   const [isMac, setIsMac] = useState(true); // Default to Mac to avoid layout shift
@@ -351,18 +368,94 @@ export const BikeMap = () => {
     loadStations();
   }, [loadStations]);
 
-  // Esc key handler: deselect selected trip
+  // User rides with decoded paths for rendering
+  const userRidesWithPaths = useMemo((): UserRideWithPath[] => {
+    const ridesWithGeometry = userRides.filter(r => r.routeGeometry);
+    
+    // Filter based on selection mode
+    const ridesToShow = showAllRides 
+      ? ridesWithGeometry 
+      : selectedRideId 
+        ? ridesWithGeometry.filter(r => r.id === selectedRideId)
+        : [];
+
+    return ridesToShow.map(ride => {
+      // Decode polyline6 - returns [lat, lng][], flip to [lng, lat]
+      const decoded = polyline.decode(ride.routeGeometry!, 6);
+      const path: [number, number][] = decoded.map(([lat, lng]) => [lng, lat]);
+      
+      return {
+        id: ride.id,
+        path,
+        bikeType: ride.bikeType,
+        startStation: ride.startStation,
+        endStation: ride.endStation,
+      };
+    });
+  }, [userRides, showAllRides, selectedRideId]);
+
+  // Zoom to user ride when selected or when showing all rides
+  useEffect(() => {
+    if (userRidesWithPaths.length === 0) return;
+
+    // Calculate bounding box of all visible paths
+    let minLng = Infinity, maxLng = -Infinity;
+    let minLat = Infinity, maxLat = -Infinity;
+
+    for (const ride of userRidesWithPaths) {
+      for (const [lng, lat] of ride.path) {
+        minLng = Math.min(minLng, lng);
+        maxLng = Math.max(maxLng, lng);
+        minLat = Math.min(minLat, lat);
+        maxLat = Math.max(maxLat, lat);
+      }
+    }
+
+    // Calculate center and appropriate zoom
+    const centerLng = (minLng + maxLng) / 2;
+    const centerLat = (minLat + maxLat) / 2;
+    
+    // Calculate zoom to fit bounds (rough approximation)
+    const lngDiff = maxLng - minLng;
+    const latDiff = maxLat - minLat;
+    const maxDiff = Math.max(lngDiff, latDiff);
+    
+    // Zoom calculation: smaller diff = higher zoom
+    // ~0.001 diff ≈ zoom 17, ~0.01 diff ≈ zoom 14, ~0.1 diff ≈ zoom 11
+    const zoom = Math.min(16, Math.max(11, 14 - Math.log2(maxDiff / 0.01)));
+
+    setInitialViewState(prev => ({
+      ...prev,
+      longitude: centerLng,
+      latitude: centerLat,
+      zoom,
+      transitionDuration: 1000,
+      transitionInterpolator: cameraInterpolator,
+    }));
+  }, [userRidesWithPaths]);
+
+  // Esc key handler: deselect selected trip or user ride
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && selectedTripId !== null) {
-        e.preventDefault();
-        selectTrip(null);
+      if (e.key === "Escape") {
+        // Clear user ride selection first
+        if (selectedRideId !== null || showAllRides) {
+          e.preventDefault();
+          selectRide(null);
+          useUserRidesStore.getState().setShowAllRides(false);
+          return;
+        }
+        // Then clear trip selection
+        if (selectedTripId !== null) {
+          e.preventDefault();
+          selectTrip(null);
+        }
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [selectedTripId, selectTrip]);
+  }, [selectedTripId, selectTrip, selectedRideId, selectRide, showAllRides]);
 
   // Keyboard shortcut refs (to avoid stale closures)
   const animStateRef = useRef(animState);
@@ -756,12 +849,19 @@ export const BikeMap = () => {
       } else if (e.key.toLowerCase() === "h" && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         toggleHud();
+      } else if (e.key.toLowerCase() === "u" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        if (userRides.length > 0) {
+          setIsMyRidesOpen(prev => !prev);
+        } else {
+          openUpload();
+        }
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [togglePlayPause, selectRandomBiker, triggerButtonAnimation, toggleHud, isLoadingTrips]);
+  }, [togglePlayPause, selectRandomBiker, triggerButtonAnimation, toggleHud, isLoadingTrips, openUpload, userRides.length]);
 
 
   if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
@@ -791,7 +891,8 @@ export const BikeMap = () => {
     return trip ? [trip] : [];
     // forgive me for this
     // eslint-disable-next-line react-hooks/exhaustive-deps 
-  }, [selectedTripId, activeTrips]); 
+  }, [selectedTripId, activeTrips]);
+
 
   const layers = useMemo(() => {
     const hasSelection = selectedTripData.length > 0;
@@ -878,6 +979,43 @@ export const BikeMap = () => {
           opacity: showStations ? 0 : 700,
         },
       }),
+      // User rides layer - shows imported rides from Gmail
+      ...(userRidesWithPaths.length > 0 ? [
+        new PathLayer<UserRideWithPath>({
+          id: "user-rides",
+          data: userRidesWithPaths,
+          getPath: (d) => d.path,
+          getColor: (d) => d.bikeType === 'ebike' 
+            ? [255, 200, 50, 200]   // Gold/yellow for ebike
+            : [50, 200, 255, 200],  // Cyan for classic
+          getWidth: 4,
+          widthMinPixels: 2,
+          widthMaxPixels: 8,
+          opacity: 0.9,
+          pickable: true,
+          jointRounded: true,
+          capRounded: true,
+        }),
+        // Start/end markers for user rides
+        new ScatterplotLayer<UserRideWithPath>({
+          id: "user-rides-start",
+          data: userRidesWithPaths,
+          getPosition: (d) => d.path[0],
+          getFillColor: [80, 200, 120, 255], // Green for start
+          getRadius: 6,
+          radiusUnits: "pixels",
+          pickable: false,
+        }),
+        new ScatterplotLayer<UserRideWithPath>({
+          id: "user-rides-end",
+          data: userRidesWithPaths,
+          getPosition: (d) => d.path[d.path.length - 1],
+          getFillColor: [247, 118, 142, 255], // Red/pink for end
+          getRadius: 6,
+          radiusUnits: "pixels",
+          pickable: false,
+        }),
+      ] : []),
       // Dimming overlay - always present, fades via GPU transitions
       new SolidPolygonLayer({
         id: "dim-overlay",
@@ -931,7 +1069,7 @@ export const BikeMap = () => {
           ]
         : []),
     ];
-  }, [activeTrips, simTimeMs, selectedTripId, selectedTripData, searchStep, stations]);
+  }, [activeTrips, simTimeMs, selectedTripId, selectedTripData, searchStep, stations, userRidesWithPaths]);
 
   const handleMapClick = useCallback(
     (info: { coordinate?: number[] }) => {
@@ -1043,11 +1181,53 @@ export const BikeMap = () => {
             </span>
             <Kbd className="hidden sm:inline-flex bg-zinc-800 text-white/70">A</Kbd>
           </a>
+          <button
+            onClick={() => userRides.length > 0 ? setIsMyRidesOpen(true) : openUpload()}
+            className="flex items-center justify-between gap-3 bg-black/45 hover:bg-black/55 hover:scale-[1.02] active:scale-95 text-white/90 text-sm font-medium pl-2.5 pr-2.5 py-2 sm:pl-2 sm:pr-2 sm:py-1.5 rounded-full border border-white/10 backdrop-blur-md transition-all duration-200 ease-out shadow-[0_0_20px_rgba(0,0,0,0.6)] hover:duration-100 active:duration-200 outline-none"
+          >
+            <span className="flex items-center gap-1.5 min-w-20">
+              {userRides.length > 0 ? (
+                <>
+                  <Bike className="w-4 h-4" />
+                  My Rides
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4" />
+                  Upload
+                </>
+              )}
+            </span>
+            <Kbd className="hidden sm:inline-flex bg-zinc-800 text-white/70">U</Kbd>
+          </button>
         </div>
 
         {/* Time - absolutely centered */}
         <div className="absolute left-1/2 -translate-x-1/2 pointer-events-auto flex flex-col items-center">
           <TimeDisplay simTimeMs={simTimeMs} realWindowStartDate={animationStartDate} />
+          {/* User ride indicator */}
+          {userRidesWithPaths.length > 0 && (
+            <div className="mt-2 px-3 py-1.5 bg-black/70 backdrop-blur-md rounded-full border border-white/20 text-sm text-white/90 flex items-center gap-2">
+              <Bike className="w-4 h-4 text-blue-400" />
+              {showAllRides ? (
+                <span>Viewing {userRidesWithPaths.length} ride{userRidesWithPaths.length !== 1 ? 's' : ''}</span>
+              ) : (
+                <span>
+                  {userRidesWithPaths[0]?.startStation} → {userRidesWithPaths[0]?.endStation}
+                </span>
+              )}
+              <button
+                onClick={() => {
+                  selectRide(null);
+                  useUserRidesStore.getState().setShowAllRides(false);
+                }}
+                className="ml-1 text-white/50 hover:text-white/90 transition-colors"
+                title="Close (Esc)"
+              >
+                ×
+              </button>
+            </div>
+          )}
           {/* SelectedTripPanel - mobile only (below time) */}
           <AnimatePresence>
             {selectedTripInfo && (
@@ -1072,6 +1252,8 @@ export const BikeMap = () => {
         </div>
       </div>
       )}
+      <UploadDialog />
+      <MyRidesPanel isOpen={isMyRidesOpen} onClose={() => setIsMyRidesOpen(false)} />
     </div>
   );
 };
