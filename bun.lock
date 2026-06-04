@@ -16,7 +16,7 @@
         "@deck.gl/layers": "^9.2.2",
         "@deck.gl/mapbox": "^9.2.2",
         "@deck.gl/react": "^9.2.2",
-        "@duckdb/duckdb-wasm": "^1.30.0",
+        "@duckdb/duckdb-wasm": "1.29.0",
         "@mapbox/polyline": "^1.2.1",
         "@radix-ui/react-dialog": "^1.1.15",
         "@radix-ui/react-slot": "^1.2.4",
@@ -147,7 +147,7 @@
 
     "@deck.gl/widgets": ["@deck.gl/widgets@9.2.2", "", { "dependencies": { "preact": "^10.17.0" }, "peerDependencies": { "@deck.gl/core": "~9.2.0", "@luma.gl/core": "~9.2.2" } }, "sha512-CuXRMHlLU+3YJjbicxp84BtIks4dLVXm2txIwUQPHqZ99zSI30SQgnhHUOJi5tJMODLD26HaQaZo0Jp3Z+sRbQ=="],
 
-    "@duckdb/duckdb-wasm": ["@duckdb/duckdb-wasm@1.30.0", "", { "dependencies": { "apache-arrow": "^17.0.0" } }, "sha512-9aWrm+4ayl4sTlvGtl/b+LxrUyXaac3yyVqkoJ3F7Vkd62PoS8PcQIRJ/KjXBW36LP1CnPY5jjvFyIcTFLtcXA=="],
+    "@duckdb/duckdb-wasm": ["@duckdb/duckdb-wasm@1.29.0", "", { "dependencies": { "apache-arrow": "^17.0.0" } }, "sha512-8Zq7vafQuIz9gklC/9375KE38UlkaS2n8+yvG+/JK7irm3DjwYNJHL4xfplIj0bSHFIg6we5XhWYFqtE/vO3+Q=="],
 
     "@duckdb/node-api": ["@duckdb/node-api@1.4.3-r.1", "", { "dependencies": { "@duckdb/node-bindings": "1.4.3-r.1" } }, "sha512-/L6nywAWDnMptERJiO3npCu8XqWYGSo2prw6RvxERtjT9J95cnUP+WM6uNAm+Nw2uYDm8PvPO2kASC3Moh2bBA=="],
 

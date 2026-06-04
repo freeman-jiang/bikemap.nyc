@@ -76,7 +76,7 @@ class DuckDBService {
       path: ":memory:",
       filesystem: {
         forceFullHTTPReads: false,
-        allowFullHTTPReads: false,
+        allowFullHTTPReads: true,
         reliableHeadRequests: true
       },
     });
