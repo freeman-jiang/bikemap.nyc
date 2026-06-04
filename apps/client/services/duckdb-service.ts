@@ -75,8 +75,7 @@ class DuckDBService {
     await this.db.open({
       path: ":memory:",
       filesystem: {
-        forceFullHTTPReads: false,
-        allowFullHTTPReads: false,
+        allowFullHTTPReads: true,
         reliableHeadRequests: true
       },
     });
