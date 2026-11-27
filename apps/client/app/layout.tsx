@@ -1,3 +1,4 @@
+import { SITE_ORIGIN } from "@/lib/site";
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
@@ -13,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://bikemap.nyc"),
+  metadataBase: new URL(SITE_ORIGIN),
   title: "bikemap.nyc",
   description:
     "Visualization of the entire history of Citi Bike, the largest bike-sharing system in the US.",
